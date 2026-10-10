@@ -49,6 +49,19 @@
   - Fixed GitHub Actions CI workflow (`.github/workflows/ci.yml`): eliminated invalid `node-modules-cache` parameter, specified Node.js 22 LTS, pinned `ubuntu-24.04` runner, and integrated automated test step (`pnpm test`).
   - Executed `supabase db push` against remote Supabase project `leifxoxnqnvezbmdtmcr` (CampusOne - Odoo X NMIT 2026), successfully applying migrations 1, 2, and 3 (`20261010000001_phase1_initial_schema.sql`, `20261010000002_phase1_rpcs.sql`, `20261010000003_phase1_seed_data.sql`). Verified via `supabase migration list`.
 
+- [x] **Phase 2: All Six Scenes & Interactive React Islands:**
+  - Implemented client API layer (`apps/web/src/lib/api.ts`) supporting Supabase Data API/RPCs with fallback demo store.
+  - Implemented interactive React islands for all 6 challenge scenes:
+    * `MembershipScene.tsx`: Walk-up signups, self-service applications, admin review & reapplication loop, door-side lookup, dues payment.
+    * `EventsScene.tsx`: Tiered member vs guest pricing, capacity gauges, online/cash ticket sales, HMAC QR issue, 2-second check-in.
+    * `AnnouncementsScene.tsx`: Feed posts filtered by audience (All Members, Volunteers, Public), authoring modal, mailing-list opt-out.
+    * `MerchScene.tsx`: Product variant selector (S/M/L/XL), live inventory tracking, low-stock warnings, member discounts, checkout.
+    * `FundraiserScene.tsx`: Goal progress bar, volunteer task board (drag/toggle statuses, assignees, due dates), cash bake-sale recording.
+    * `TreasurerScene.tsx`: Real-time KPI tiles (Money In, Money Out, Net Balance), source breakdown, immutable audited ledger table.
+  - Built `RoleSwitcher.tsx` and `RoleContext.tsx` supporting 6 personas (Admin, Treasurer, Door Staff, Volunteer, Active Member, Applicant).
+  - Wired all 6 scenes into their respective Astro pages (`/memberships`, `/events`, `/announcements`, `/merch`, `/fundraiser`, `/treasurer`).
+  - Added `packages/contracts/src/phase2.test.ts` with 11 passing tests covering application revisioning, member discounts, ticket capacity, merch inventory, and action queue evaluation.
+
 - [x] **Phase 3: Payment and Scheduled Jobs (Razorpay & pg_cron):**
   - **Razorpay Test Mode Order Creation:** Built `create-payment-order` Deno Edge Function (`supabase/functions/create-payment-order/index.ts`) creating Razorpay orders via API with test key `rzp_test_TXWbmmg3SRSwlV`, validating authoritative database totals, and saving `razorpay_order_id`.
   - **HMAC Signature Verification:** Built `verify-payment` Deno Edge Function (`supabase/functions/verify-payment/index.ts`) performing Web Crypto HMAC-SHA256 verification over `${razorpay_order_id}|${razorpay_payment_id}` using `RAZORPAY_KEY_SECRET` and calling `fulfill_checkout` RPC.
@@ -58,7 +71,25 @@
     * `generate_membership_expiry_reminders()`: Scans active memberships expiring within 30d and 7d, inserts into `membership_reminders` and `action_queue_items` with dedupe keys (`0 8 * * *`).
     * `expire_stale_checkouts()`: Cancels checkouts in `pending_payment` past `expires_at` and atomically releases reserved event capacity (`events.reserved_capacity`) and merch stock (`product_variants.reserved_quantity`) (`*/15 * * * *`).
   - **CORS & Role Check Standard:** Created unified Deno CORS helper (`_shared/cors.ts`) supporting preflight OPTIONS and header checks.
-  - **Contracts & Automated Test Suite:** Updated `@campusone/contracts` and added `packages/contracts/src/phase3.test.ts` (Razorpay HMAC calculation, raw webhook signature verification, single ledger posting invariants, renewal reminder windows, reservation release equations, CORS header compliance).
+  - **Contracts & Automated Test Suite:** Updated `@campusone/contracts` and added `packages/contracts/src/phase3.test.ts`. Total test suite passes with 28 tests across 3 suites.
+
+- [x] **Phase 4: Remote Deployments & Production Auth System:**
+  - **Remote Database Migration:** Pushed Migration 04 (`20261010000004_phase3_scheduled_jobs.sql`) to remote Supabase project `leifxoxnqnvezbmdtmcr`. All 4 migrations are now live.
+  - **Supabase Edge Functions Deployed:**
+    * `create-payment-order`: Active on remote Supabase (JWT verified).
+    * `verify-payment`: Active on remote Supabase (JWT verified).
+    * `record-manual-payment`: Active on remote Supabase (JWT verified).
+    * `razorpay-webhook`: Active on remote Supabase (`--no-verify-jwt` enabled).
+  - **Remote Secrets Configured:** Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` in Supabase secret vault.
+  - **Auth User Provisioning:** Provisioned 6 real Supabase Auth accounts (`admin@skyline.edu`, `treasurer@skyline.edu`, `door@skyline.edu`, `volunteer@skyline.edu`, `member@skyline.edu`, `applicant@skyline.edu`) with synchronized `profiles` and authoritative `public.user_roles` grants.
+  - **Secure Auth Client & Islands:**
+    * Implemented `apps/web/src/lib/auth.ts` with real `signInWithPassword`, `signUp`, `signOut`, `signInAsDemoRole`, and `onAuthStateChange`.
+    * Built `/login` ([login.astro](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/pages/login.astro)) with [LoginScene.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/LoginScene.tsx) featuring email/password sign-in and 1-click evaluator persona buttons.
+    * Built `/signup` ([signup.astro](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/pages/signup.astro)) with [SignUpScene.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/SignUpScene.tsx) for walk-up / new student self-registration.
+    * Synchronized [RoleSwitcher.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/RoleSwitcher.tsx) and [RoleContext.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/RoleContext.tsx) to acquire real Supabase Auth JWTs upon role switching.
+    * Updated [Navbar.astro](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/layout/Navbar.astro) with Sign In and Role Switch controls.
+  - **Automated Tests:** Added `packages/contracts/src/auth.test.ts`. Full test suite now passes with **31 tests across 4 test suites**.
+  - **Production Build:** Verified with `astro build` — 9 production routes compiled with 0 errors.
 
 ## Key Design Rules & Conventions
 

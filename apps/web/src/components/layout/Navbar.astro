@@ -62,6 +62,14 @@ const navItems = [
         <SearchPill />
       </div>
 
+      <!-- Sign In Button -->
+      <a
+        href="/login"
+        class="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-[13px] font-bold text-[var(--color-ink-deep)] bg-[var(--color-surface-soft)] hover:bg-[var(--color-hairline-soft)] border border-[var(--color-hairline-soft)] transition-colors"
+      >
+        Sign In
+      </a>
+
       <!-- Quick Action CTA -->
       <Button variant="primary" size="sm" href="/memberships">
         Join Club
@@ -104,6 +112,12 @@ const navItems = [
           );
         })
       }
+      <a
+        href="/login"
+        class="px-4 py-2.5 rounded-full text-[14px] font-bold text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)]"
+      >
+        Sign In / Switch Role
+      </a>
     </div>
   </div>
 </header>

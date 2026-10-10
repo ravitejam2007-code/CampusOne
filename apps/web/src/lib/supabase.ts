@@ -4,7 +4,7 @@ import type { AstroCookies } from 'astro';
 
 // Environment variables
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://leifxoxnqnvezbmdtmcr.supabase.co';
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder';
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlaWZ4b3hucW52ZXpibWR0bWNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MDc0NDAsImV4cCI6MjEwNzE4MzQ0MH0.jHq6iSuTOTF7tMTrVjZLslx3NO7emDKGfLJRR7TepqM';
 
 /**
  * Standard browser client for React Islands and client-side interactions.
