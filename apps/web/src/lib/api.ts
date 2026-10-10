@@ -1983,7 +1983,12 @@ export const api = {
         body: { action: 'verify', pass_token: passToken },
       });
       if (!error && data && data.status === 'success') {
-        return data as VerifyStudentPassResult;
+        return {
+          status: 'success',
+          verified: data.verified ?? false,
+          data: data.data,
+          reason: data.data?.reason,
+        } as VerifyStudentPassResult;
       }
     } catch (e) {
       console.warn('Edge function verify pass fallback to RPC:', e);
@@ -1997,12 +2002,21 @@ export const api = {
       if (!rpcErr && verifyData) {
         return {
           status: 'success',
-          verified: verifyData.valid,
+          verified: verifyData.valid ?? false,
           data: verifyData,
+          reason: verifyData.reason,
         };
       }
     } catch (e) {
       console.warn('Supabase RPC verify_student_all_in_one_pass fallback:', e);
+    }
+
+    if (!passToken || passToken.trim() === '') {
+      return {
+        status: 'error',
+        verified: false,
+        reason: 'Empty or missing pass token',
+      };
     }
 
     return {

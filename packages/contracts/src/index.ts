@@ -671,3 +671,60 @@ export interface VerifyStudentPassResult {
   reason?: string;
 }
 
+// ─── Standard Backend Error Contracts ──────────────────────────────────────────
+
+export type BackendErrorCode =
+  | 'BAD_REQUEST'
+  | 'INVALID_JSON'
+  | 'INVALID_REQUEST'
+  | 'UNAUTHENTICATED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'CONFLICT'
+  | 'UNPROCESSABLE_ENTITY'
+  | 'RATE_LIMITED'
+  | 'CONFIG_ERROR'
+  | 'INTERNAL_ERROR';
+
+export interface BackendErrorPayload {
+  success: false;
+  error: {
+    code: BackendErrorCode;
+    message: string;
+    details?: any;
+  };
+}
+
+export type BackendApiResponse<T> =
+  | ({ success: true } & T)
+  | BackendErrorPayload;
+
+export function isBackendError(res: any): res is BackendErrorPayload {
+  return Boolean(
+    res &&
+    typeof res === 'object' &&
+    res.success === false &&
+    res.error &&
+    typeof res.error.code === 'string'
+  );
+}
+
+export function formatBackendErrorMessage(err: unknown): string {
+  if (!err) return 'An unknown error occurred';
+  if (typeof err === 'string') return err;
+  if (typeof err === 'object') {
+    const errorObj = err as any;
+    if (errorObj.error?.message) return errorObj.error.message;
+    if (errorObj.message) return errorObj.message;
+    if (errorObj.details) return String(errorObj.details);
+  }
+  return String(err);
+}
+
+const RFC4122_UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isValidUuid(id?: string | null): boolean {
+  if (!id || typeof id !== 'string') return false;
+  return RFC4122_UUID_REGEX.test(id.trim());
+}
+

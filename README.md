@@ -1,7 +1,7 @@
 # CampusOne — Student Organization Management System
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/ravitejam2007-code/CampusOne)
-[![Tests](https://img.shields.io/badge/tests-37%2F37%20passing-brightgreen.svg)](https://github.com/ravitejam2007-code/CampusOne)
+[![Tests](https://img.shields.io/badge/tests-41%2F41%20passing-brightgreen.svg)](https://github.com/ravitejam2007-code/CampusOne)
 [![Framework](https://img.shields.io/badge/Astro-5.0%2B%20SSR-BC52EE.svg)](https://astro.build)
 [![CSS](https://img.shields.io/badge/Tailwind-v4%20%40theme-38BDF8.svg)](https://tailwindcss.com)
 [![Database](https://img.shields.io/badge/Supabase-PostgreSQL%2015%20%2B%20RLS-3ECF8E.svg)](https://supabase.com)
@@ -437,12 +437,17 @@ CampusOne/
 │       ├── src/
 │       │   ├── index.ts                   # Exported contract interfaces
 │       │   ├── auth.test.ts               # Auth & role permission tests
+│       │   ├── errors.test.ts             # Backend error codes & validation tests
 │       │   ├── pass.test.ts               # All-in-One QR Pass & HMAC signature tests
 │       │   ├── phase1.test.ts             # Foundation & money arithmetic tests
 │       │   ├── phase2.test.ts             # Six scenes business logic tests
 │       │   └── phase3.test.ts             # Payment & scheduled jobs tests
 ├── supabase/
 │   ├── functions/                         # Deno Edge Functions
+│   │   ├── _shared/                       # Shared CORS, Supabase clients & error handlers
+│   │   │   ├── cors.ts
+│   │   │   ├── errors.ts                  # Standard error codes & PostgreSQL error mapper
+│   │   │   └── supabase.ts
 │   │   ├── create-payment-order/          # Razorpay order generation
 │   │   ├── generate-all-in-one-pass/      # Digital Student Pass & QR code generator / verifier
 │   │   ├── record-manual-payment/         # Audited staff cash/UPI recording
@@ -456,7 +461,8 @@ CampusOne/
 │       ├── 20261010000005_fix_rpcs.sql
 │       ├── 20261010000006_demo_enrichment.sql
 │       ├── 20261010000007_all_in_one_qr_pass.sql
-│       └── 20261010000008_update_event_dates_and_pass.sql
+│       ├── 20261010000008_update_event_dates_and_pass.sql
+│       └── 20261010000009_enhanced_backend_error_handling.sql
 ├── docs/                                  # Architectural specifications & design guides
 └── package.json                           # Root monorepo workspace configuration
 ```
@@ -498,7 +504,7 @@ RAZORPAY_WEBHOOK_SECRET=<your-webhook-secret>
 ```bash
 pnpm test
 ```
-*Expected: 37 tests passing across 5 test suites.*
+*Expected: 41 tests passing across 6 test suites.*
 
 ### 5. Launch the Development Server
 ```bash
@@ -532,6 +538,11 @@ CampusOne features comprehensive unit, integration, and security test coverage:
    ✓ validates permission matrix across all 6 roles
    ✓ rejects unauthorized staff payments from members
    ✓ enforces profile ownership rules
+ ✓ src/errors.test.ts (4 tests)
+   ✓ validates RFC4122 compliant UUID formats
+   ✓ correctly identifies backend error responses via isBackendError
+   ✓ formats various error formats into human-readable messages
+   ✓ covers all standard backend error codes
  ✓ src/phase1.test.ts (9 tests)
    ✓ applies 15% discount for active members on event tickets
    ✓ applies 10% discount on club merchandise
@@ -547,8 +558,8 @@ CampusOne features comprehensive unit, integration, and security test coverage:
    ✓ ensures webhook raw-body signature validation
    ✓ validates pg_cron expiration schedule queries
 
- Test Files  5 passed (5)
-      Tests  37 passed (37)
+ Test Files  6 passed (6)
+      Tests  41 passed (41)
 ```
 
 ---
@@ -564,6 +575,7 @@ CampusOne features comprehensive unit, integration, and security test coverage:
 | **Scene 5: Bake Sale Fundraiser** | Complete (P0) | Real-time goal progress bar, volunteer task board, audited cash contributions |
 | **Scene 6: Treasurer Overview** | Complete (P0) | KPI summary tiles, immutable ledger, deterministic Action Queue |
 | **All-in-One Digital Pass** | Complete (P0) | Server-authoritative HMAC-SHA256 pass, Edge Function SVG/PNG QR rendering, unified member + subscription + event tickets verification |
+| **Backend Error Handling** | Complete (P0) | Unified error standard, safe JSON parser, RFC4122 UUID validation, SQLSTATE error mapping, RPC exception hardening |
 | **Payment Gateway** | Complete (P0) | Razorpay Checkout (Test Mode), Deno Edge Functions, webhook signature check |
 | **Authentication & RBAC** | Complete (P0) | Supabase Auth, PostgreSQL RLS, 6 provisioned evaluator personas |
 | **Design System** | Complete (P0) | Cobalt Rule (`#0064E0`), Montserrat typography, 100px pill buttons |

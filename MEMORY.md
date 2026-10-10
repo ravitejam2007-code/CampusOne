@@ -140,6 +140,33 @@
       - Display badges for membership status (`pass.payload.membership.tier_name`) and discounts.
       - Map upcoming events from `pass.payload.upcoming_events` into event admission chips.
 
+- [x] **Phase 7: Comprehensive Backend Error Handling & Validation:**
+  - **Standardized Error Architecture:**
+    * Implemented `supabase/functions/_shared/errors.ts` establishing 11 standard error codes (`BAD_REQUEST`, `INVALID_JSON`, `INVALID_REQUEST`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `UNPROCESSABLE_ENTITY`, `RATE_LIMITED`, `CONFIG_ERROR`, `INTERNAL_ERROR`).
+    * Built safe `parseJsonBody` parser: automatically catches malformed JSON and returns `400 INVALID_JSON` instead of crashing with generic 500s.
+    * Added `isValidUuid` validator ensuring IDs adhere to standard 8-4-4-4-12 hex format before passing to PostgreSQL.
+    * Built `mapPostgresError`: maps PostgreSQL SQLSTATE error codes (`22P02`, `23505`, `23503`, `PGRST116`) and RPC exceptions (`FORBIDDEN`, `CONFLICT`, `NOT_FOUND`, `UNAUTHENTICATED`) to appropriate HTTP status codes (400, 401, 403, 404, 409, 500).
+    * Enhanced `_shared/supabase.ts` with fail-fast environment variable validation for `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_ANON_KEY`.
+  - **Database Migration 09 Live on Remote Supabase (`leifxoxnqnvezbmdtmcr`):**
+    * `20261010000009_enhanced_backend_error_handling.sql`: Applied via `supabase db push`.
+    * Hardened `create_checkout`: Rejects empty arrays, non-array inputs, non-positive quantities (`v_qty <= 0`), and invalid UUIDs with descriptive exceptions.
+    * Hardened `fulfill_checkout`: Validates `p_checkout_id`, rejects cancelled checkouts, and handles double-fulfillment idempotently.
+    * Hardened `verify_student_all_in_one_pass`: Protected token parsing and UUID extraction inside `begin ... exception when others ...` block so malformed tokens gracefully return `{ valid: false, reason: "..." }` rather than throwing uncaught database exceptions.
+    * Hardened `check_in_ticket`: Added null safety and protective checks against non-existent tickets.
+  - **Deno Edge Functions Redeployed Live:**
+    * Redeployed all 5 Edge Functions (`create-payment-order`, `verify-payment`, `record-manual-payment`, `razorpay-webhook`, `generate-all-in-one-pass`) with unified error middleware.
+  - **Shared Contracts & Test Suite:**
+    * Exported `BackendErrorCode`, `BackendErrorPayload`, `BackendApiResponse<T>`, `isBackendError`, `formatBackendErrorMessage`, and `isValidUuid` in `packages/contracts/src/index.ts`.
+    * Added `packages/contracts/src/errors.test.ts` (4 passing tests).
+    * Total test suite now stands at **41 passing tests across 6 test suites** (`auth`, `errors`, `pass`, `phase1`, `phase2`, `phase3`).
+  - **Live Verification Results:**
+    * Malformed JSON body -> `400 INVALID_JSON`
+    * Missing required parameters -> `400 INVALID_REQUEST`
+    * Malformed UUID -> `400 INVALID_REQUEST`
+    * Non-existent checkout ID -> `404 NOT_FOUND`
+    * Unauthorized door scanner -> `403 FORBIDDEN`
+    * Malformed token presented to authorized door staff -> `200 OK` with `verified: false` and explanatory reason.
+
 ## All-in-One Pass API Reference & Technical Specification
 
 ### 1. Data Schema Contracts (`@campusone/contracts`)
