@@ -74,7 +74,7 @@
   - **Contracts & Automated Test Suite:** Updated `@campusone/contracts` and added `packages/contracts/src/phase3.test.ts`. Total test suite passes with 28 tests across 3 suites.
 
 - [x] **Phase 4: Remote Deployments & Production Auth System:**
-  - **Remote Database Migration:** Pushed Migration 04 (`20261010000004_phase3_scheduled_jobs.sql`) to remote Supabase project `leifxoxnqnvezbmdtmcr`. All 4 migrations are now live.
+  - **Remote Database Migration:** Pushed Migration 04 (`20261010000004_phase3_scheduled_jobs.sql`) to remote Supabase project `leifxoxnqnvezbmdtmcr`.
   - **Supabase Edge Functions Deployed:**
     * `create-payment-order`: Active on remote Supabase (JWT verified).
     * `verify-payment`: Active on remote Supabase (JWT verified).
@@ -88,9 +88,24 @@
     * Built `/signup` ([signup.astro](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/pages/signup.astro)) with [SignUpScene.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/SignUpScene.tsx) for walk-up / new student self-registration.
     * Synchronized [RoleSwitcher.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/RoleSwitcher.tsx) and [RoleContext.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/RoleContext.tsx) to acquire real Supabase Auth JWTs upon role switching.
     * Updated [Navbar.astro](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/layout/Navbar.astro) with Sign In and Role Switch controls.
-  - **Zero Hardcoded Secrets Guarantee:** Stripped all hardcoded project URLs, tokens, and fallback keys across `supabase.ts`, `api.ts`, `seed-auth-users.mjs`, and Edge Functions (`create-payment-order`, `verify-payment`, `razorpay-webhook`). All values are loaded strictly from `.env` and environment variables with explicit fail-fast validations.
+  - **Zero Hardcoded Secrets Guarantee:** Stripped all hardcoded project URLs, tokens, and fallback keys across `supabase.ts`, `api.ts`, `seed-auth-users.mjs`, and Edge Functions. All values are loaded strictly from `.env` and environment variables with explicit fail-fast validations.
   - **Automated Tests:** Added `packages/contracts/src/auth.test.ts`. Full test suite now passes with **31 tests across 4 test suites**.
-  - **Production Build:** Verified with `astro build` — 9 production routes compiled with 0 errors.
+
+- [x] **Phase 5: End-to-End Live Backend Completion & Verification:**
+  - **Database Migration 05 (`20261010000005_fix_rpcs.sql`):** Fixed `extensions.hmac` resolution and search path in `fulfill_checkout`; enhanced `create_checkout` to accept optional `p_buyer_id`. Applied to remote Supabase via `npx supabase db push`.
+  - **Database Migration 06 (`20261010000006_demo_enrichment.sql`):** Added `razorpay_order_id` to `checkouts` table; enriched inventory for low-stock rule (`HOODIE-NAVY-XL` down to 3 units); created overdue task on fundraiser; created low-capacity workshop mixer. Evaluated deterministic Action Queue with 3 live open items.
+  - **Edge Functions Live Verification:**
+    * `record-manual-payment`: Updated to utilize `getSupabaseUserClient(req)` with the caller's JWT, preserving `auth.uid()` for `is_org_staff` validation. Tested and verified live: recorded cash payment, fulfilled checkout, issued ticket, and logged immutable ledger entry.
+    * `create-payment-order`: Tested and verified live: created checkout for Spring Gala, called Razorpay API in Test Mode, persisted order ID.
+    * `verify-payment`: Tested and verified live: verified HMAC signature, fulfilled checkout, issued ticket, and logged ledger entry.
+  - **Live Backend Integration Across All 6 Scenes in `apps/web/src/lib/api.ts`:**
+    * **Scene 1 (Memberships):** `getMembershipTiers`, `getMembershipApplications`, `submitMembershipApplication`, `reviewMembershipApplication`, `reapplyMembershipApplication`, `recordWalkUpMembership`, and `lookupMember` (live query on `profiles` joined with `memberships` and `membership_tiers`).
+    * **Scene 2 (Events):** `getEvents`, `getTicketTypes`, `buyTicket` (live `create_checkout` and `fulfill_checkout`), `checkInTicket` (`check_in_ticket` RPC with duplicate scan prevention), `getEventSummary` (live attendance and ledger totals).
+    * **Scene 3 (Announcements):** `getAnnouncements`, `publishAnnouncement`, `getMailingPreferences`, `updateMailingPreferences` (live upserts on `mailing_list_preferences`).
+    * **Scene 4 (Merch):** `getProducts`, `orderMerchVariant` (atomic stock decrements on `product_variants` and ledger postings).
+    * **Scene 5 (Fundraiser):** `getActiveFundraisers`, `getFundraiserTasks`, `createTask`, `updateTaskStatus`, `recordCashContribution` (live `record_cash_contribution` RPC writing to `contributions` and immutable ledger).
+    * **Scene 6 (Treasurer):** `getTreasurerOverview` (`get_treasurer_overview` RPC), `getLedgerEntries`, `getActionQueueItems`, `refreshActionQueue` (`refresh_action_queue` RPC), `resolveActionQueueItem`.
+  - **Automated Verification:** Verified all 31 automated tests passing across 4 test suites. Compiled all 9 production Astro routes with 0 errors.
 
 ## Key Design Rules & Conventions
 

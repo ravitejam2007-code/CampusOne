@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
-import { getSupabaseAdminClient } from '../_shared/supabase.ts';
+import { getSupabaseAdminClient, getSupabaseUserClient } from '../_shared/supabase.ts';
 
 serve(async (req: Request) => {
     const corsResponse = handleCors(req);
@@ -23,7 +23,8 @@ serve(async (req: Request) => {
             );
         }
 
-        const supabase = getSupabaseAdminClient();
+        const authHeader = req.headers.get('Authorization') ?? '';
+        const supabase = authHeader.includes('Bearer') ? getSupabaseUserClient(req) : getSupabaseAdminClient();
 
         // Call atomic staff payment RPC
         const { data: result, error: rpcError } = await supabase.rpc('record_staff_payment', {
