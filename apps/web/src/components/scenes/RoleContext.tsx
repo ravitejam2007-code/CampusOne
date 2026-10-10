@@ -14,19 +14,19 @@ interface RoleContextValue {
 }
 
 const ROLE_LABELS: Record<DemoRole, string> = {
-  admin: 'Executive / Admin (Aditi)',
-  treasurer: 'Treasurer (Devansh)',
-  door_staff: 'Door Staff (Simran)',
-  volunteer: 'Volunteer Lead (Karan)',
-  member: 'Active Member (Rahul)',
-  applicant: 'Student Applicant (Priya)',
+  admin: 'Executive / Admin',
+  treasurer: 'Treasurer',
+  door_staff: 'Door Staff',
+  volunteer: 'Volunteer Lead',
+  member: 'Active Member',
+  applicant: 'Student Applicant',
   guest: 'Campus Guest',
 };
 
 const RoleContext = createContext<RoleContextValue>({
   role: 'admin',
   setRole: async () => {},
-  roleLabel: 'Executive / Admin (Aditi)',
+  roleLabel: 'Executive / Admin',
   session: null,
   authStatus: 'loading',
   isRealAuth: false,
@@ -106,7 +106,9 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       value={{
         role,
         setRole,
-        roleLabel: ROLE_LABELS[role] || 'Student Member',
+        roleLabel: session?.fullName
+          ? `${session.fullName} (${ROLE_LABELS[role] || 'Member'})`
+          : (ROLE_LABELS[role] || 'Student Member'),
         session,
         authStatus,
         isRealAuth: authStatus === 'authenticated',

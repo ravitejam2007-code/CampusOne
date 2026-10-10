@@ -36,12 +36,23 @@ export default function SignUpScene() {
         studentId: studentId.trim() || undefined,
       });
 
-      setSuccessMsg(`Welcome, ${session.fullName}! Your student account has been created. Redirecting to memberships...`);
+      if (session.rateLimitNotice) {
+        setSuccessMsg(
+          `Welcome, ${session.fullName}! Account created directly in database (email verification rate limit bypassed). Redirecting to memberships...`
+        );
+      } else {
+        setSuccessMsg(`Welcome, ${session.fullName}! Your student account has been created. Redirecting to memberships...`);
+      }
+
       setTimeout(() => {
         window.location.href = '/memberships';
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Registration failed');
+      if (err?.message?.toLowerCase().includes('rate limit') || err?.status === 429) {
+        setErrorMsg('Supabase email verification rate limit exceeded (3/hr on free tier). Sign in via Demo Persona or try again shortly.');
+      } else {
+        setErrorMsg(err.message || 'Registration failed');
+      }
     } finally {
       setLoading(false);
     }

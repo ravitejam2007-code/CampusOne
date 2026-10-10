@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TreasurerScene from '../components/scenes/TreasurerScene';
+---
+
+<BaseLayout
+  title="Finance Dashboard — SkylineSOS"
+  description="Treasurer finances: real-time income, expenses, bake sale cash, dues, tickets, and audited ledger on SkylineSOS."
+>
+  <TreasurerScene client:load />
+</BaseLayout>

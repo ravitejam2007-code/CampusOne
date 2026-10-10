@@ -13,6 +13,15 @@ export default function LoginScene() {
     getCurrentUserSession().then((session) => {
       if (session) setCurrentSession(session);
     });
+
+    const handleAuthChange = (e: CustomEvent) => {
+      setCurrentSession(e.detail);
+    };
+
+    window.addEventListener('campusone:auth_changed' as any, handleAuthChange);
+    return () => {
+      window.removeEventListener('campusone:auth_changed' as any, handleAuthChange);
+    };
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -31,7 +40,11 @@ export default function LoginScene() {
         window.location.href = '/';
       }, 1000);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Invalid credentials');
+      if (err?.message?.toLowerCase().includes('rate limit') || err?.status === 429) {
+        setErrorMsg('Email verification rate limited (3/hr on free tier). Try signing in with 1-Click Demo accounts or retry in a few moments.');
+      } else {
+        setErrorMsg(err.message || 'Invalid credentials');
+      }
     } finally {
       setLoading(false);
     }

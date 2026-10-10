@@ -1,6 +1,6 @@
 ---
-import Button from '../ui/Button.astro';
 import SearchPill from '../ui/SearchPill.astro';
+import UserNavMenu from './UserNavMenu';
 
 interface Props {
   currentPath?: string;
@@ -14,39 +14,39 @@ const navItems = [
   { label: 'Merch', href: '/merch' },
   { label: 'Fundraiser', href: '/fundraiser' },
   { label: 'Announcements', href: '/announcements' },
-  { label: 'Treasurer', href: '/treasurer' },
 ];
 ---
 
-<header class="sticky top-0 z-50 w-full bg-[var(--color-canvas)] border-b border-[var(--color-hairline-soft)]">
+<header transition:persist="main-navbar" class="sticky top-0 z-50 w-full glass-navbar border-b border-black/[0.08] transition-all">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[64px] flex items-center justify-between gap-4">
     <!-- Brand Wordmark -->
     <div class="flex items-center gap-3 shrink-0">
-      <a href="/" class="flex items-center gap-2 group">
-        <span class="w-8 h-8 rounded-full bg-[var(--color-ink-deep)] text-white flex items-center justify-center font-extrabold text-[16px] tracking-tight group-hover:scale-105 transition-transform">
-          C1
-        </span>
-        <span class="font-extrabold text-[20px] tracking-[-0.3px] text-[var(--color-ink-deep)]">
-          CampusOne
+      <a href="/" class="flex items-center gap-2.5 group">
+        <img
+          src="/skylinesos-logo.jpg"
+          alt="SkylineSOS Logo"
+          class="w-8 h-8 rounded-full group-hover:scale-105 transition-transform shadow-xs shrink-0 object-cover border border-black/10"
+        />
+        <span class="font-extrabold text-[19px] tracking-tight text-[var(--color-ink-deep)]">
+          SkylineSOS
         </span>
       </a>
-      <span class="hidden lg:inline-block text-[11px] font-bold text-[var(--color-steel)] bg-[var(--color-surface-soft)] px-2 py-0.5 rounded-full border border-[var(--color-hairline-soft)]">
-        Skyline Club
-      </span>
     </div>
 
-    <!-- Center Navigation Pill Tabs (Desktop) -->
-    <nav class="hidden md:flex items-center gap-1.5 overflow-x-auto py-1">
+    <!-- Center Navigation Links (Clean, No Horizontal Scrollbars) -->
+    <nav class="hidden md:flex items-center gap-1" id="desktop-nav">
       {
         navItems.map((item) => {
           const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
           return (
             <a
               href={item.href}
-              class={`px-3.5 py-1.5 rounded-full text-[14px] font-bold tracking-[-0.14px] transition-colors whitespace-nowrap ${
+              data-nav-link
+              data-nav-href={item.href}
+              class={`px-3.5 py-1.5 rounded-full text-[13px] font-bold tracking-tight transition-all duration-150 t-button-action ${
                 isActive
-                  ? 'bg-[var(--color-ink-deep)] text-white'
-                  : 'bg-[var(--color-canvas)] text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)]'
+                  ? 'bg-[var(--color-ink-deep)] text-white shadow-xs'
+                  : 'text-[var(--color-steel)] hover:text-[var(--color-ink-deep)] hover:bg-black/5'
               }`}
             >
               {item.label}
@@ -56,55 +56,48 @@ const navItems = [
       }
     </nav>
 
-    <!-- Right Controls -->
-    <div class="flex items-center gap-2.5 shrink-0">
+    <!-- Right Controls: Search & Interactive User Navigation Island -->
+    <div class="flex items-center gap-3 shrink-0">
       <div class="hidden xl:block">
-        <SearchPill />
+        <SearchPill id="search-pill-desktop" />
       </div>
 
-      <!-- Sign In Button -->
-      <a
-        href="/login"
-        class="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-[13px] font-bold text-[var(--color-ink-deep)] bg-[var(--color-surface-soft)] hover:bg-[var(--color-hairline-soft)] border border-[var(--color-hairline-soft)] transition-colors"
-      >
-        Sign In
-      </a>
-
-      <!-- Quick Action CTA -->
-      <Button variant="primary" size="sm" href="/memberships">
-        Join Club
-      </Button>
+      <!-- Reactive Auth & Persona Island -->
+      <UserNavMenu client:load />
 
       <!-- Mobile Menu Toggle Button -->
       <button
         id="mobile-menu-btn"
         type="button"
-        class="md:hidden p-2 rounded-full text-[var(--color-ink-deep)] hover:bg-[var(--color-surface-soft)] transition-colors"
+        class="md:hidden p-2 rounded-full text-[var(--color-ink-deep)] hover:bg-[var(--color-surface-soft)] transition-colors cursor-pointer"
         aria-label="Toggle navigation menu"
+        aria-expanded="false"
       >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
     </div>
   </div>
 
-  <!-- Mobile Drawer -->
-  <div id="mobile-menu" class="hidden md:hidden border-t border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] px-4 pt-3 pb-6">
-    <div class="mb-4">
-      <SearchPill class="max-w-full w-full" />
+  <!-- Mobile Drawer with Glassmorphism -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-[var(--color-hairline-soft)] glass-dropdown px-4 pt-3 pb-6 space-y-3">
+    <div class="mb-2">
+      <SearchPill id="search-pill-mobile" class="max-w-full w-full" />
     </div>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-1" id="mobile-nav-links">
       {
         navItems.map((item) => {
           const isActive = currentPath === item.href;
           return (
             <a
               href={item.href}
-              class={`px-4 py-2.5 rounded-full text-[14px] font-bold ${
+              data-mobile-nav-link
+              data-nav-href={item.href}
+              class={`px-4 py-2.5 rounded-full text-[14px] font-bold transition-colors ${
                 isActive
                   ? 'bg-[var(--color-ink-deep)] text-white'
-                  : 'text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)]'
+                  : 'text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)]'
               }`}
             >
               {item.label}
@@ -123,13 +116,66 @@ const navItems = [
 </header>
 
 <script>
-  // Clean vanilla JS for mobile menu toggle without React hydration overhead
-  const toggleBtn = document.getElementById('mobile-menu-btn');
-  const menu = document.getElementById('mobile-menu');
+  function setupNavbar() {
+    const toggleBtn = document.getElementById('mobile-menu-btn');
+    const menu = document.getElementById('mobile-menu');
+    const currentPath = window.location.pathname;
 
-  if (toggleBtn && menu) {
-    toggleBtn.addEventListener('click', () => {
-      menu.classList.toggle('hidden');
+    // Sync Desktop Nav Active Classes
+    const desktopLinks = document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
+    desktopLinks.forEach((link) => {
+      const href = link.getAttribute('data-nav-href');
+      const isActive = href ? (currentPath === href || (href !== '/' && currentPath.startsWith(href))) : false;
+      if (isActive) {
+        link.className = 'px-3.5 py-1.5 rounded-full text-[13px] font-bold tracking-tight transition-all duration-150 t-button-action bg-[var(--color-ink-deep)] text-white shadow-xs';
+      } else {
+        link.className = 'px-3.5 py-1.5 rounded-full text-[13px] font-bold tracking-tight transition-all duration-150 t-button-action text-[var(--color-steel)] hover:text-[var(--color-ink-deep)] hover:bg-black/5';
+      }
     });
+
+    // Sync Mobile Nav Active Classes
+    const mobileLinks = document.querySelectorAll<HTMLAnchorElement>('[data-mobile-nav-link]');
+    mobileLinks.forEach((link) => {
+      const href = link.getAttribute('data-nav-href');
+      const isActive = href ? (currentPath === href || (href !== '/' && currentPath.startsWith(href))) : false;
+      if (isActive) {
+        link.className = 'px-4 py-2.5 rounded-full text-[14px] font-bold transition-colors bg-[var(--color-ink-deep)] text-white';
+      } else {
+        link.className = 'px-4 py-2.5 rounded-full text-[14px] font-bold transition-colors text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)]';
+      }
+      // Clicking mobile link closes drawer
+      link.addEventListener('click', () => {
+        if (menu) {
+          menu.classList.add('hidden');
+          toggleBtn?.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+
+    // Toggle button handler
+    if (toggleBtn && menu) {
+      // Remove any existing click listener to avoid duplicate toggles
+      const newToggleBtn = toggleBtn.cloneNode(true) as HTMLElement;
+      toggleBtn.parentNode?.replaceChild(newToggleBtn, toggleBtn);
+
+      newToggleBtn.addEventListener('click', () => {
+        const isHidden = menu.classList.toggle('hidden');
+        newToggleBtn.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+      });
+    }
+
+    // Always ensure menu is closed after route navigation
+    if (menu) {
+      menu.classList.add('hidden');
+      toggleBtn?.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  // Hook into both initial load and Astro client-side page transitions
+  document.addEventListener('astro:page-load', setupNavbar);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupNavbar);
+  } else {
+    setupNavbar();
   }
 </script>

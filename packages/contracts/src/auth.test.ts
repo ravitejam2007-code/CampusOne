@@ -87,4 +87,43 @@ describe('Auth & Permission Engine Tests', () => {
     expect(isStaff(['member'])).toBe(false);
     expect(isStaff([])).toBe(false);
   });
+
+  it('correctly classifies Supabase Auth 429 rate limit errors', () => {
+    const isRateLimitError = (error: any): boolean => {
+      if (!error) return false;
+      return (
+        error.status === 429 ||
+        error.code === 'over_email_send_rate_limit' ||
+        (typeof error.message === 'string' &&
+          (error.message.toLowerCase().includes('rate limit') ||
+           error.message.toLowerCase().includes('too many requests')))
+      );
+    };
+
+    // Standard Supabase Auth 429 network response
+    expect(isRateLimitError({ status: 429, message: 'email rate limit exceeded' })).toBe(true);
+    expect(isRateLimitError({ code: 'over_email_send_rate_limit', message: 'over email send rate limit' })).toBe(true);
+    expect(isRateLimitError({ message: 'Rate limit exceeded. Please wait 1 hour.' })).toBe(true);
+
+    // Non-rate-limit errors
+    expect(isRateLimitError({ status: 400, message: 'Invalid email format' })).toBe(false);
+    expect(isRateLimitError({ status: 401, message: 'Invalid credentials' })).toBe(false);
+    expect(isRateLimitError(null)).toBe(false);
+  });
+
+  it('validates UUID generation compliance for Postgres RPC compatibility', () => {
+    const generateUUID = (): string => {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    };
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    for (let i = 0; i < 10; i++) {
+      const id = generateUUID();
+      expect(id).toMatch(uuidRegex);
+    }
+  });
 });

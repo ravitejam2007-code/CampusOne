@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import { formatPaise, formatDateTime } from '../../lib/formatters';
+import { LoadingCard, ButtonSpinner } from '../ui/LoadingState';
+import { getActiveSession, getCurrentUserSession, type UserSession } from '../../lib/auth';
 import type {
   MembershipTier,
   MembershipApplication,
@@ -8,21 +10,45 @@ import type {
 } from '@campusone/contracts';
 
 export default function MembershipScene() {
+  const [session, setSession] = useState<UserSession | null>(() => {
+    if (typeof window !== 'undefined') return getActiveSession();
+    return null;
+  });
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [applications, setApplications] = useState<MembershipApplication[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Async submission loading states
+  const [isApplying, setIsApplying] = useState(false);
+  const [isReapplying, setIsReapplying] = useState(false);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [isWalkUpSubmitting, setIsWalkUpSubmitting] = useState(false);
+  const [renewingId, setRenewingId] = useState<string | null>(null);
+
   // Application Modal/Form state
   const [applyTier, setApplyTier] = useState<MembershipTier | null>(null);
-  const [applicantName, setApplicantName] = useState('Priya Nair');
-  const [applicantEmail, setApplicantEmail] = useState('p.nair@skyline.edu');
-  const [applicantIdNum, setApplicantIdNum] = useState('SKY-2026-4091');
+  const [applicantName, setApplicantName] = useState(() => {
+    const s = typeof window !== 'undefined' ? getActiveSession() : null;
+    return s?.fullName || 'Priya Nair';
+  });
+  const [applicantEmail, setApplicantEmail] = useState(() => {
+    const s = typeof window !== 'undefined' ? getActiveSession() : null;
+    return s?.email || 'p.nair@skyline.edu';
+  });
+  const [applicantIdNum, setApplicantIdNum] = useState(() => {
+    const s = typeof window !== 'undefined' ? getActiveSession() : null;
+    return s?.studentId || 'SKY-2026-4091';
+  });
   const [statement, setStatement] = useState('I want to volunteer on the design committee and join the student gala team.');
   const [applySuccess, setApplySuccess] = useState<string | null>(null);
 
   // Reapply state
   const [reapplyApp, setReapplyApp] = useState<MembershipApplication | null>(null);
   const [updatedStatement, setUpdatedStatement] = useState('');
+
+  // Rejection modal state
+  const [rejectModalApp, setRejectModalApp] = useState<MembershipApplication | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState('Incomplete statement or missing student documentation');
 
   // Walk-up state
   const [walkUpName, setWalkUpName] = useState('');
@@ -60,12 +86,51 @@ export default function MembershipScene() {
 
   useEffect(() => {
     loadData();
+
+    getCurrentUserSession().then((s) => {
+      if (s) {
+        setSession(s);
+        setApplicantName(s.fullName);
+        setApplicantEmail(s.email);
+        if (s.studentId) setApplicantIdNum(s.studentId);
+      }
+    });
+
+    const handleAuthChange = (e: CustomEvent) => {
+      const newSession = e.detail as UserSession | null;
+      setSession(newSession);
+      if (newSession) {
+        setApplicantName(newSession.fullName);
+        setApplicantEmail(newSession.email);
+        if (newSession.studentId) setApplicantIdNum(newSession.studentId);
+      }
+    };
+
+    window.addEventListener('campusone:auth_changed' as any, handleAuthChange);
+    return () => {
+      window.removeEventListener('campusone:auth_changed' as any, handleAuthChange);
+    };
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setApplyTier(null);
+        setReapplyApp(null);
+        setRejectModalApp(null);
+      }
+    };
+    if (applyTier || reapplyApp || rejectModalApp) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [applyTier, reapplyApp, rejectModalApp]);
 
   // Handle Application Submit
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!applyTier) return;
+    setIsApplying(true);
     try {
       await api.submitMembershipApplication({
         applicant_name: applicantName,
@@ -76,14 +141,17 @@ export default function MembershipScene() {
       });
       setApplySuccess(`Application for ${applyTier.name} submitted successfully! In review by executive team.`);
       setApplyTier(null);
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsApplying(false);
     }
   };
 
   // Handle Admin Review
   const handleReview = async (appId: string, decision: 'approved' | 'rejected', reason?: string) => {
+    setReviewingId(appId);
     try {
       await api.reviewMembershipApplication({
         application_id: appId,
@@ -91,9 +159,11 @@ export default function MembershipScene() {
         rejection_reason: reason,
         notes: decision === 'approved' ? 'Candidate meets all community requirements' : reason,
       });
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setReviewingId(null);
     }
   };
 
@@ -101,6 +171,7 @@ export default function MembershipScene() {
   const handleReapply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reapplyApp) return;
+    setIsReapplying(true);
     try {
       await api.reapplyMembershipApplication({
         application_id: reapplyApp.id,
@@ -108,9 +179,11 @@ export default function MembershipScene() {
       });
       setReapplyApp(null);
       setUpdatedStatement('');
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsReapplying(false);
     }
   };
 
@@ -121,6 +194,7 @@ export default function MembershipScene() {
       alert('Please fill out all required fields');
       return;
     }
+    setIsWalkUpSubmitting(true);
     try {
       const res = await api.recordWalkUpMembership({
         full_name: walkUpName,
@@ -133,9 +207,11 @@ export default function MembershipScene() {
       setWalkUpName('');
       setWalkUpEmail('');
       setWalkUpId('');
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsWalkUpSubmitting(false);
     }
   };
 
@@ -162,38 +238,56 @@ export default function MembershipScene() {
 
   // Handle Renewal
   const handleRenew = async (memberId: string) => {
+    setRenewingId(memberId);
     try {
       const res = await api.renewMembership(memberId, 'online');
       setRenewSuccess(`Membership renewed until ${new Date(res.expires_at).toLocaleDateString()}! Dues recorded.`);
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setRenewingId(null);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-[var(--color-steel)]">Loading membership tiers and applications...</div>;
+    return <LoadingCard label="Loading membership tiers & application records..." />;
   }
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-16 t-enter">
       {/* Toast Feedbacks */}
       {applySuccess && (
-        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px]">
+        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px] t-toast is-open">
           <span>✓ {applySuccess}</span>
-          <button onClick={() => setApplySuccess(null)} className="font-bold underline ml-4 text-[12px]">Dismiss</button>
+          <button onClick={() => setApplySuccess(null)} className="font-bold underline ml-4 text-[12px] cursor-pointer">Dismiss</button>
         </div>
       )}
       {walkUpSuccess && (
-        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px]">
+        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px] t-toast is-open">
           <span>✓ {walkUpSuccess}</span>
-          <button onClick={() => setWalkUpSuccess(null)} className="font-bold underline ml-4 text-[12px]">Dismiss</button>
+          <button onClick={() => setWalkUpSuccess(null)} className="font-bold underline ml-4 text-[12px] cursor-pointer">Dismiss</button>
         </div>
       )}
       {renewSuccess && (
-        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px]">
+        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px] t-toast is-open">
           <span>✓ {renewSuccess}</span>
-          <button onClick={() => setRenewSuccess(null)} className="font-bold underline ml-4 text-[12px]">Dismiss</button>
+          <button onClick={() => setRenewSuccess(null)} className="font-bold underline ml-4 text-[12px] cursor-pointer">Dismiss</button>
+        </div>
+      )}
+
+      {/* Active User Account Banner */}
+      {session && (
+        <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[13px] text-blue-950">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+            <span>
+              Applying as authenticated student: <strong>{session.fullName}</strong> ({session.email})
+            </span>
+          </div>
+          <span className="font-mono text-[11px] font-bold text-blue-800 bg-blue-100 px-3 py-1 rounded-full">
+            {session.studentId || 'STUDENT ID ASSIGNED'}
+          </span>
         </div>
       )}
 
@@ -204,7 +298,7 @@ export default function MembershipScene() {
           return (
             <div
               key={t.id}
-              className={`p-8 rounded-3xl bg-[var(--color-canvas)] border flex flex-col justify-between relative transition-all ${
+              className={`p-8 rounded-3xl bg-[var(--color-canvas)] border flex flex-col justify-between relative transition-all t-card-interactive ${
                 isRecommended ? 'border-2 border-[var(--color-ink-deep)] shadow-sm' : 'border-[var(--color-hairline-soft)]'
               }`}
             >
@@ -252,7 +346,7 @@ export default function MembershipScene() {
                 <button
                   type="button"
                   onClick={() => setApplyTier(t)}
-                  className="w-full py-3.5 px-6 rounded-full font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-deep)] transition-all text-[15px] shadow-sm cursor-pointer"
+                  className="w-full py-3.5 px-6 rounded-full font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-deep)] transition-all text-[15px] shadow-sm cursor-pointer t-button-action"
                 >
                   Apply & Pay Dues ({formatPaise(t.fee_paise)})
                 </button>
@@ -264,8 +358,8 @@ export default function MembershipScene() {
 
       {/* ─── MODAL: APPLICATION SUBMIT FORM ─── */}
       {applyTier && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 t-modal-backdrop is-open">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative t-modal is-open">
             <div className="flex justify-between items-start border-b border-[var(--color-hairline-soft)] pb-4">
               <div>
                 <h3 className="text-2xl font-bold text-[var(--color-ink-deep)]">Join as {applyTier.name}</h3>
@@ -274,7 +368,7 @@ export default function MembershipScene() {
               <button
                 type="button"
                 onClick={() => setApplyTier(null)}
-                className="text-2xl text-[var(--color-steel)] hover:text-black cursor-pointer"
+                className="text-2xl text-[var(--color-steel)] hover:text-black cursor-pointer leading-none"
               >
                 ×
               </button>
@@ -330,15 +424,16 @@ export default function MembershipScene() {
                 <button
                   type="button"
                   onClick={() => setApplyTier(null)}
-                  className="flex-1 py-3 rounded-full border border-[var(--color-hairline)] text-[14px] font-bold hover:bg-[var(--color-surface-soft)]"
+                  className="flex-1 py-3 rounded-full border border-[var(--color-hairline)] text-[14px] font-bold hover:bg-[var(--color-surface-soft)] t-button-action cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-full bg-[var(--color-primary)] text-white text-[14px] font-bold hover:bg-[var(--color-primary-deep)] cursor-pointer"
+                  disabled={isApplying}
+                  className="flex-1 py-3 rounded-full bg-[var(--color-primary)] text-white text-[14px] font-bold hover:bg-[var(--color-primary-deep)] cursor-pointer t-button-action flex items-center justify-center gap-2"
                 >
-                  Submit Application
+                  {isApplying ? <ButtonSpinner size={16} /> : 'Submit Application'}
                 </button>
               </div>
             </form>
@@ -348,8 +443,8 @@ export default function MembershipScene() {
 
       {/* ─── MODAL: REAPPLY FORM ─── */}
       {reapplyApp && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 t-modal-backdrop is-open">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative t-modal is-open">
             <div className="border-b border-[var(--color-hairline-soft)] pb-4">
               <span className="text-[12px] font-bold text-[var(--color-critical)] uppercase tracking-wider">Revision #{reapplyApp.revision + 1}</span>
               <h3 className="text-2xl font-bold text-[var(--color-ink-deep)]">Update & Reapply</h3>
@@ -377,15 +472,78 @@ export default function MembershipScene() {
                 <button
                   type="button"
                   onClick={() => setReapplyApp(null)}
-                  className="flex-1 py-3 rounded-full border border-[var(--color-hairline)] text-[14px] font-bold"
+                  className="flex-1 py-3 rounded-full border border-[var(--color-hairline)] text-[14px] font-bold hover:bg-[var(--color-surface-soft)] t-button-action cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-full bg-[var(--color-ink-deep)] text-white text-[14px] font-bold hover:bg-black cursor-pointer"
+                  disabled={isReapplying}
+                  className="flex-1 py-3 rounded-full bg-[var(--color-ink-deep)] text-white text-[14px] font-bold hover:bg-black cursor-pointer t-button-action flex items-center justify-center gap-2"
                 >
-                  Submit Revision #{reapplyApp.revision + 1}
+                  {isReapplying ? <ButtonSpinner size={16} /> : `Submit Revision #${reapplyApp.revision + 1}`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: REJECT FORM ─── */}
+      {rejectModalApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 t-modal-backdrop is-open">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative t-modal is-open">
+            <div className="flex justify-between items-start border-b border-[var(--color-hairline-soft)] pb-4">
+              <div>
+                <span className="text-[12px] font-bold text-[var(--color-critical)] uppercase tracking-wider">Review Decision</span>
+                <h3 className="text-2xl font-bold text-[var(--color-ink-deep)]">Reject Application {rejectModalApp.id}</h3>
+                <p className="text-[13px] text-[var(--color-steel)]">State a reason so the applicant can revise and reapply.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRejectModalApp(null)}
+                className="text-2xl text-[var(--color-steel)] hover:text-black cursor-pointer leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (rejectModalApp) {
+                  handleReview(rejectModalApp.id, 'rejected', rejectReasonInput);
+                  setRejectModalApp(null);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-[13px] font-bold text-[var(--color-ink-deep)] mb-1">Rejection Reason</label>
+                <textarea
+                  rows={3}
+                  required
+                  value={rejectReasonInput}
+                  onChange={(e) => setRejectReasonInput(e.target.value)}
+                  className="w-full p-4 rounded-2xl border border-[var(--color-hairline)] text-[14px] focus:outline-none focus:border-red-500"
+                  placeholder="Explain what needs revision (e.g. Incomplete statement, missing ID)..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRejectModalApp(null)}
+                  className="flex-1 py-3 rounded-full border border-[var(--color-hairline)] text-[14px] font-bold hover:bg-[var(--color-surface-soft)] t-button-action cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={reviewingId === rejectModalApp.id}
+                  className="flex-1 py-3 rounded-full bg-red-600 text-white text-[14px] font-bold hover:bg-red-700 cursor-pointer t-button-action flex items-center justify-center gap-2"
+                >
+                  {reviewingId === rejectModalApp.id ? <ButtonSpinner size={16} /> : 'Confirm Rejection'}
                 </button>
               </div>
             </form>
@@ -451,20 +609,22 @@ export default function MembershipScene() {
                     <>
                       <button
                         type="button"
+                        disabled={reviewingId === app.id}
                         onClick={() => handleReview(app.id, 'approved')}
-                        className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer"
+                        className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer t-button-action inline-flex items-center gap-1.5"
                       >
-                        Approve Membership
+                        {reviewingId === app.id ? <ButtonSpinner size={12} /> : 'Approve Membership'}
                       </button>
                       <button
                         type="button"
+                        disabled={reviewingId === app.id}
                         onClick={() => {
-                          const r = prompt('Enter rejection reason:');
-                          if (r) handleReview(app.id, 'rejected', r);
+                          setRejectModalApp(app);
+                          setRejectReasonInput('Incomplete applicant statement or missing documentation');
                         }}
-                        className="px-4 py-1.5 rounded-full border border-red-300 text-red-600 text-[12px] font-bold hover:bg-red-50 cursor-pointer"
+                        className="px-4 py-1.5 rounded-full border border-red-300 text-red-600 text-[12px] font-bold hover:bg-red-50 cursor-pointer t-button-action inline-flex items-center gap-1.5"
                       >
-                        Reject with Reason
+                        {reviewingId === app.id ? <ButtonSpinner size={12} color="#dc2626" /> : 'Reject with Reason'}
                       </button>
                     </>
                   )}
@@ -476,7 +636,7 @@ export default function MembershipScene() {
                         setReapplyApp(app);
                         setUpdatedStatement(app.statement || '');
                       }}
-                      className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer"
+                      className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer t-button-action"
                     >
                       Correct & Reapply
                     </button>
@@ -497,7 +657,7 @@ export default function MembershipScene() {
       {/* ─── 3. WALK-UP SIGNUP & DOOR LOOKUP ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Walk-up Campus Registration Form */}
-        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6">
+        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6 t-card-interactive">
           <div className="flex items-center justify-between pb-4 border-b border-[var(--color-hairline-soft)]">
             <div>
               <h3 className="text-xl font-bold text-[var(--color-ink-deep)]">Walk-up Campus Registration</h3>
@@ -551,7 +711,7 @@ export default function MembershipScene() {
                 <select
                   value={walkUpTierId}
                   onChange={(e) => setWalkUpTierId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-full border border-[var(--color-hairline)] text-[13px] focus:outline-none focus:border-[var(--color-fb-blue)] bg-white"
+                  className="w-full px-4 py-3 rounded-full border border-[var(--color-hairline)] text-[13px] focus:outline-none focus:border-[var(--color-fb-blue)] bg-white cursor-pointer"
                 >
                   {tiers.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -566,7 +726,7 @@ export default function MembershipScene() {
                 <select
                   value={walkUpMethod}
                   onChange={(e) => setWalkUpMethod(e.target.value as any)}
-                  className="w-full px-4 py-3 rounded-full border border-[var(--color-hairline)] text-[13px] focus:outline-none focus:border-[var(--color-fb-blue)] bg-white"
+                  className="w-full px-4 py-3 rounded-full border border-[var(--color-hairline)] text-[13px] focus:outline-none focus:border-[var(--color-fb-blue)] bg-white cursor-pointer"
                 >
                   <option value="cash">Staff Recorded Cash</option>
                   <option value="manual_upi">Manual UPI Desk QR</option>
@@ -577,16 +737,17 @@ export default function MembershipScene() {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[14px] font-bold hover:bg-black transition-all cursor-pointer"
+                disabled={isWalkUpSubmitting}
+                className="w-full py-3.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[14px] font-bold hover:bg-black transition-all cursor-pointer t-button-action flex items-center justify-center gap-2"
               >
-                Record Walk-up Dues & Activate
+                {isWalkUpSubmitting ? <ButtonSpinner size={16} /> : 'Record Walk-up Dues & Activate'}
               </button>
             </div>
           </form>
         </div>
 
         {/* Door-side Member Verification Card */}
-        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6">
+        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6 t-card-interactive">
           <div className="flex items-center justify-between pb-4 border-b border-[var(--color-hairline-soft)]">
             <div>
               <h3 className="text-xl font-bold text-[var(--color-ink-deep)]">Door-Side Member Lookup</h3>
@@ -604,7 +765,7 @@ export default function MembershipScene() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Type name (e.g. Rahul, Priya, Ananya) or student ID..."
+                placeholder="Type member name, email, or student ID..."
                 className="w-full px-4 py-3 rounded-full border border-[var(--color-hairline)] text-[14px] focus:outline-none focus:border-[var(--color-fb-blue)]"
               />
             </div>
@@ -618,7 +779,7 @@ export default function MembershipScene() {
               {searchResults.map((m) => (
                 <div
                   key={m.id}
-                  className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-2"
+                  className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-2 t-card-interactive"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[15px] text-[var(--color-ink-deep)]">{m.full_name}</span>
@@ -644,10 +805,11 @@ export default function MembershipScene() {
                   <div className="pt-2">
                     <button
                       type="button"
+                      disabled={renewingId === m.id}
                       onClick={() => handleRenew(m.id)}
-                      className="px-3 py-1 rounded-full text-[12px] font-bold bg-[var(--color-ink-deep)] text-white hover:bg-black cursor-pointer"
+                      className="px-3 py-1 rounded-full text-[12px] font-bold bg-[var(--color-ink-deep)] text-white hover:bg-black cursor-pointer t-button-action inline-flex items-center gap-1.5"
                     >
-                      Renew Membership (+365 Days)
+                      {renewingId === m.id ? <ButtonSpinner size={12} /> : 'Renew Membership (+365 Days)'}
                     </button>
                   </div>
                 </div>

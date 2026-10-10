@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import { formatPaise } from '../../lib/formatters';
+import { LoadingCard, ButtonSpinner } from '../ui/LoadingState';
 import type { Product, ProductVariant } from '@campusone/contracts';
 
 export default function MerchScene() {
@@ -9,6 +10,7 @@ export default function MerchScene() {
   const [isMember, setIsMember] = useState(true);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isOrdering, setIsOrdering] = useState(false);
 
   const loadData = async () => {
     try {
@@ -31,6 +33,7 @@ export default function MerchScene() {
   // Handle Merch Checkout
   const handleBuy = async () => {
     if (!selectedVariant) return;
+    setIsOrdering(true);
     try {
       const res = await api.orderMerchVariant({
         variant_id: selectedVariant.id,
@@ -39,14 +42,16 @@ export default function MerchScene() {
       });
       setOrderSuccess(`Order confirmed for size ${selectedVariant.size}! Decremented stock. Ledger record created (${res.ledgerEntry.id}).`);
       setSelectedVariant(res.variant);
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsOrdering(false);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-[var(--color-steel)]">Loading merchandise catalog...</div>;
+    return <LoadingCard label="Loading merchandise catalog & real-time inventory..." />;
   }
 
   const primaryProduct = products[0];
@@ -57,11 +62,11 @@ export default function MerchScene() {
   const discountedPricePaise = isMember ? Math.round(basePricePaise * 0.8) : basePricePaise;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 t-enter">
       {orderSuccess && (
-        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px]">
+        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px] t-toast is-open">
           <span>✓ {orderSuccess}</span>
-          <button onClick={() => setOrderSuccess(null)} className="font-bold underline ml-4 text-[12px]">Dismiss</button>
+          <button onClick={() => setOrderSuccess(null)} className="font-bold underline ml-4 text-[12px] cursor-pointer">Dismiss</button>
         </div>
       )}
 
@@ -69,7 +74,7 @@ export default function MerchScene() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Product Visual Card (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6">
+          <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6 t-card-interactive">
             <div className="aspect-video w-full rounded-2xl bg-[var(--color-surface-soft)] flex items-center justify-center border border-[var(--color-hairline-soft)] relative overflow-hidden">
               <div className="text-center p-8">
                 <span className="w-24 h-24 mx-auto rounded-full bg-[var(--color-ink-deep)] text-white flex items-center justify-center font-extrabold text-3xl mb-4 shadow-sm">
@@ -100,7 +105,7 @@ export default function MerchScene() {
 
         {/* Right: Sticky Purchase Rail (5 Cols) */}
         <div className="lg:col-span-5 sticky top-24">
-          <div className="p-6 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] shadow-sm space-y-6">
+          <div className="p-6 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] shadow-sm space-y-6 t-card-interactive">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">
@@ -160,7 +165,7 @@ export default function MerchScene() {
                       type="button"
                       disabled={isOut}
                       onClick={() => setSelectedVariant(v)}
-                      className={`py-3 rounded-xl border text-[14px] font-bold transition-all text-center cursor-pointer ${
+                      className={`py-3 rounded-xl border text-[14px] font-bold transition-all text-center cursor-pointer t-button-action ${
                         isSelected
                           ? 'border-2 border-[var(--color-ink-deep)] bg-[var(--color-canvas)] text-[var(--color-ink-deep)]'
                           : isOut
@@ -187,11 +192,15 @@ export default function MerchScene() {
             <div className="pt-2">
               <button
                 type="button"
-                disabled={!selectedVariant || selectedVariant.stock_on_hand === 0}
+                disabled={!selectedVariant || selectedVariant.stock_on_hand === 0 || isOrdering}
                 onClick={handleBuy}
-                className="w-full py-4 px-6 rounded-full font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-deep)] transition-all text-[16px] shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 px-6 rounded-full font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-deep)] transition-all text-[16px] shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed t-button-action flex items-center justify-center gap-2"
               >
-                Add to Cart · {formatPaise(discountedPricePaise)}
+                {isOrdering ? (
+                  <ButtonSpinner size={18} />
+                ) : (
+                  `Add to Cart · ${formatPaise(discountedPricePaise)}`
+                )}
               </button>
             </div>
           </div>

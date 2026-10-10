@@ -16,7 +16,11 @@ const {
 } = Astro.props;
 ---
 
-<div class={`relative flex items-center w-full max-w-[280px] h-[40px] rounded-full bg-[var(--color-surface-soft)] px-3.5 ${className}`}>
+<form
+  action="/events"
+  method="get"
+  class={`relative flex items-center w-full max-w-[280px] h-[40px] rounded-full bg-[var(--color-surface-soft)] px-3.5 border border-transparent focus-within:border-[var(--color-hairline)] transition-colors ${className}`}
+>
   <svg
     class="w-4 h-4 text-[var(--color-steel)] shrink-0"
     fill="none"
@@ -36,7 +40,8 @@ const {
     id={id}
     name={name}
     placeholder={placeholder}
+    aria-label="Search site"
     class="w-full bg-transparent border-none outline-none pl-2.5 text-[14px] text-[var(--color-ink)] placeholder-[var(--color-steel)] font-normal"
     {...rest}
   />
-</div>
+</form>

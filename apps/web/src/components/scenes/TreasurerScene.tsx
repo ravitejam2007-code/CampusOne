@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import { formatPaise } from '../../lib/formatters';
+import { LoadingCard, ButtonSpinner } from '../ui/LoadingState';
 import type { TreasurerOverviewResult, LedgerEntry, ActionQueueItem } from '@campusone/contracts';
 
 export default function TreasurerScene() {
@@ -10,6 +11,10 @@ export default function TreasurerScene() {
   const [actionQueue, setActionQueue] = useState<ActionQueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Async button loading states
+  const [isRefreshingQueue, setIsRefreshingQueue] = useState(false);
+  const [resolvingItemId, setResolvingItemId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -34,28 +39,34 @@ export default function TreasurerScene() {
 
   // Handle Action Queue Refresh (Re-evaluate deterministic SQL rules)
   const handleRefreshQueue = async () => {
+    setIsRefreshingQueue(true);
     try {
       const count = await api.refreshActionQueue();
       setActionSuccess(`Evaluated all deterministic operational rules! Active open items: ${count}.`);
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsRefreshingQueue(false);
     }
   };
 
   // Handle Resolve Action Item
   const handleResolveItem = async (itemId: string, title: string) => {
+    setResolvingItemId(itemId);
     try {
       await api.resolveActionQueueItem(itemId, 'Staff verified & closed');
       setActionSuccess(`Action item "${title}" marked resolved.`);
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setResolvingItemId(null);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-[var(--color-steel)]">Loading treasury ledger and action queue...</div>;
+    return <LoadingCard label="Loading audited ledger & real-time money movement..." />;
   }
 
   const netMovement = overview ? overview.net_recorded_movement_paise : 6720900;
@@ -76,18 +87,18 @@ export default function TreasurerScene() {
   };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 t-enter">
       {actionSuccess && (
-        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px]">
+        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px] t-toast is-open">
           <span>✓ {actionSuccess}</span>
-          <button onClick={() => setActionSuccess(null)} className="font-bold underline ml-4 text-[12px]">Dismiss</button>
+          <button onClick={() => setActionSuccess(null)} className="font-bold underline ml-4 text-[12px] cursor-pointer">Dismiss</button>
         </div>
       )}
 
       {/* ─── 1. THREE BIG KPI TILES (Money In, Money Out, Net Recorded Movement) ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {/* Money In */}
-        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-2">
+        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-2 t-card-interactive">
           <span className="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">
             Money In (Total)
           </span>
@@ -100,7 +111,7 @@ export default function TreasurerScene() {
         </div>
 
         {/* Money Out */}
-        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-2">
+        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-2 t-card-interactive">
           <span className="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">
             Money Out (Expenses)
           </span>
@@ -113,7 +124,7 @@ export default function TreasurerScene() {
         </div>
 
         {/* Net Recorded Movement */}
-        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border-2 border-[var(--color-ink-deep)] space-y-2 shadow-sm">
+        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border-2 border-[var(--color-ink-deep)] space-y-2 shadow-sm t-card-interactive">
           <div className="flex items-center justify-between">
             <span className="text-[13px] font-bold text-[var(--color-ink-deep)] uppercase tracking-wider">
               Net Recorded Movement
@@ -133,7 +144,7 @@ export default function TreasurerScene() {
 
       {/* ─── 2. REVENUE BREAKDOWN (By Method & By Source) ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="p-6 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-4">
+        <div className="p-6 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-4 t-card-interactive">
           <h4 className="font-bold text-[16px] text-[var(--color-ink-deep)]">Breakdown by Payment Method</h4>
           <div className="space-y-2 text-[14px]">
             <div className="flex justify-between py-1 border-b border-[var(--color-hairline-soft)]">
@@ -157,7 +168,7 @@ export default function TreasurerScene() {
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-4">
+        <div className="p-6 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-4 t-card-interactive">
           <h4 className="font-bold text-[16px] text-[var(--color-ink-deep)]">Breakdown by Income Source</h4>
           <div className="space-y-2 text-[14px]">
             <div className="flex justify-between py-1 border-b border-[var(--color-hairline-soft)]">
@@ -189,7 +200,7 @@ export default function TreasurerScene() {
       </div>
 
       {/* ─── 3. AUDITED SOURCE LEDGER TABLE ─── */}
-      <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6">
+      <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6 t-card-interactive">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--color-hairline-soft)]">
           <div>
             <h3 className="text-2xl font-bold text-[var(--color-ink-deep)]">Audited Source Ledger</h3>
@@ -213,7 +224,7 @@ export default function TreasurerScene() {
                   key={key}
                   type="button"
                   onClick={() => setActiveFilter(key)}
-                  className={`px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all cursor-pointer t-button-action ${
                     active
                       ? 'bg-[var(--color-ink-deep)] text-white shadow-sm'
                       : 'bg-[var(--color-surface-soft)] text-[var(--color-steel)] hover:text-black border border-[var(--color-hairline-soft)]'
@@ -271,7 +282,7 @@ export default function TreasurerScene() {
       </div>
 
       {/* ─── 4. DETERMINISTIC ACTION QUEUE ─── */}
-      <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6">
+      <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-6 t-card-interactive">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--color-hairline-soft)]">
           <div>
             <div className="flex items-center gap-2">
@@ -287,10 +298,11 @@ export default function TreasurerScene() {
 
           <button
             type="button"
+            disabled={isRefreshingQueue}
             onClick={handleRefreshQueue}
-            className="px-4 py-2 rounded-full bg-[var(--color-ink-deep)] text-white text-[13px] font-bold hover:bg-black transition-all cursor-pointer whitespace-nowrap"
+            className="px-4 py-2 rounded-full bg-[var(--color-ink-deep)] text-white text-[13px] font-bold hover:bg-black transition-all cursor-pointer whitespace-nowrap t-button-action inline-flex items-center gap-2"
           >
-            ↻ Re-evaluate Operational Rules
+            {isRefreshingQueue ? <ButtonSpinner size={14} /> : '↻ Re-evaluate Operational Rules'}
           </button>
         </div>
 
@@ -299,7 +311,7 @@ export default function TreasurerScene() {
           {actionQueue.map((item) => (
             <div
               key={item.id}
-              className="p-5 rounded-2xl border border-[var(--color-hairline-soft)] bg-[var(--color-surface-soft)] space-y-3 flex flex-col justify-between"
+              className="p-5 rounded-2xl border border-[var(--color-hairline-soft)] bg-[var(--color-surface-soft)] space-y-3 flex flex-col justify-between t-card-interactive"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -328,10 +340,11 @@ export default function TreasurerScene() {
               <div className="pt-2 border-t border-[var(--color-hairline-soft)] flex justify-end">
                 <button
                   type="button"
+                  disabled={resolvingItemId === item.id}
                   onClick={() => handleResolveItem(item.id, item.title)}
-                  className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer"
+                  className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer t-button-action inline-flex items-center gap-1.5"
                 >
-                  Mark Resolved
+                  {resolvingItemId === item.id ? <ButtonSpinner size={12} /> : 'Mark Resolved'}
                 </button>
               </div>
             </div>

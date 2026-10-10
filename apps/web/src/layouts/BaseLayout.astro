@@ -1,20 +1,18 @@
 ---
+import { ClientRouter } from 'astro:transitions';
 import Navbar from '../components/layout/Navbar.astro';
 import Footer from '../components/layout/Footer.astro';
-import PromoBanner from '../components/ui/PromoBanner.astro';
-import RoleSwitcher from '../components/scenes/RoleSwitcher';
 import '../styles/global.css';
+import '../styles/transitions.css';
 
 interface Props {
   title?: string;
   description?: string;
-  showDemoBanner?: boolean;
 }
 
 const {
-  title = 'CampusOne — Skyline Student Association',
-  description = 'The unified operating system for student organizations: memberships, gala events, announcements, merch, fundraisers, and club finances.',
-  showDemoBanner = true,
+  title = 'SkylineSOS — Student Organization System',
+  description = 'Skyline Student Association operating system: memberships, gala events, announcements, hoodies, fundraisers, and club finances.',
 } = Astro.props;
 ---
 
@@ -26,16 +24,9 @@ const {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <ClientRouter />
   </head>
   <body class="min-h-full flex flex-col antialiased selection:bg-[var(--color-primary)] selection:text-white">
-    <RoleSwitcher client:load />
-    {
-      showDemoBanner && (
-        <PromoBanner variant="dark">
-          Skyline Student Association · Official Platform for Members, Events & Club Life
-        </PromoBanner>
-      )
-    }
     <Navbar />
     <main class="flex-1">
       <slot />

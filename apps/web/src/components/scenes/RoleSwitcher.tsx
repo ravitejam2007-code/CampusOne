@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useDemoRole } from './RoleContext';
-import { DEMO_ACCOUNTS, signInAsDemoRole } from '../../lib/auth';
+import { signInAsDemoRole } from '../../lib/auth';
 
 const ROLES = [
   { id: 'admin', label: 'Admin' },

@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import { formatPaise } from '../../lib/formatters';
+import { LoadingCard, ButtonSpinner } from '../ui/LoadingState';
 import type { Fundraiser, FundraiserTask, TaskStatus, TaskPriority } from '@campusone/contracts';
 
 export default function FundraiserScene() {
   const [fundraiser, setFundraiser] = useState<Fundraiser | null>(null);
   const [tasks, setTasks] = useState<FundraiserTask[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Async button loading states
+  const [isPostingCash, setIsPostingCash] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   // Cash contribution entry state
   const [cashAmount, setCashAmount] = useState('');
@@ -38,11 +43,24 @@ export default function FundraiserScene() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowAddTask(false);
+      }
+    };
+    if (showAddTask) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showAddTask]);
+
   // Handle Cash Contribution Submit
   const handleCashEntry = async (e: React.FormEvent) => {
     e.preventDefault();
     const paise = Math.round(parseFloat(cashAmount) * 100);
     if (!paise || paise <= 0 || !fundraiser) return;
+    setIsPostingCash(true);
     try {
       const res = await api.recordCashContribution({
         p_fundraiser_id: fundraiser.id,
@@ -52,9 +70,11 @@ export default function FundraiserScene() {
       });
       setCashSuccess(`Audited cash entry of ₹${cashAmount} posted to ledger (${res.ledger_entry_id})!`);
       setCashAmount('');
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsPostingCash(false);
     }
   };
 
@@ -67,7 +87,7 @@ export default function FundraiserScene() {
 
     try {
       await api.updateTaskStatus(taskId, nextStatus);
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
     }
@@ -77,6 +97,7 @@ export default function FundraiserScene() {
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle || !fundraiser) return;
+    setIsCreatingTask(true);
     try {
       await api.createTask({
         fundraiser_id: fundraiser.id,
@@ -87,14 +108,16 @@ export default function FundraiserScene() {
       setShowAddTask(false);
       setNewTaskTitle('');
       setNewTaskAssignee('');
-      loadData();
+      await loadData();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsCreatingTask(false);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-[var(--color-steel)]">Loading fundraiser campaign and tasks...</div>;
+    return <LoadingCard label="Loading bake sale fundraiser & task progress..." />;
   }
 
   const doneCount = tasks.filter((t) => t.status === 'done').length;
@@ -130,18 +153,18 @@ export default function FundraiserScene() {
   };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 t-enter">
       {cashSuccess && (
-        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px]">
+        <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-success)] text-[var(--color-success)] flex justify-between items-center text-[14px] t-toast is-open">
           <span>✓ {cashSuccess}</span>
-          <button onClick={() => setCashSuccess(null)} className="font-bold underline ml-4 text-[12px]">Dismiss</button>
+          <button onClick={() => setCashSuccess(null)} className="font-bold underline ml-4 text-[12px] cursor-pointer">Dismiss</button>
         </div>
       )}
 
       {/* ─── 1. FUNDRAISER PROGRESS CARDS ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Financial Progress Card */}
-        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-4">
+        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-4 t-card-interactive">
           <div className="flex items-center justify-between">
             <span className="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">
               Fundraising Goal
@@ -175,7 +198,7 @@ export default function FundraiserScene() {
         </div>
 
         {/* Task Progress Card */}
-        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-4">
+        <div className="p-8 rounded-3xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] space-y-4 t-card-interactive">
           <div className="flex items-center justify-between">
             <span className="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">
               Task Status
@@ -216,7 +239,7 @@ export default function FundraiserScene() {
             <button
               type="button"
               onClick={() => setShowAddTask(!showAddTask)}
-              className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer"
+              className="px-4 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer t-button-action"
             >
               + Add Task
             </button>
@@ -224,7 +247,7 @@ export default function FundraiserScene() {
 
           {/* Add Task Drawer */}
           {showAddTask && (
-            <div className="p-6 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-3">
+            <div className="p-6 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-3 t-card-interactive">
               <h4 className="font-bold text-[16px] text-[var(--color-ink-deep)]">New Volunteer Task</h4>
               <form onSubmit={handleCreateTask} className="space-y-3">
                 <input
@@ -239,7 +262,7 @@ export default function FundraiserScene() {
                   <select
                     value={newTaskPriority}
                     onChange={(e) => setNewTaskPriority(e.target.value as any)}
-                    className="w-full px-4 py-2 rounded-full border border-[var(--color-hairline)] text-[13px] bg-white"
+                    className="w-full px-4 py-2 rounded-full border border-[var(--color-hairline)] text-[13px] bg-white cursor-pointer"
                   >
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
@@ -258,30 +281,39 @@ export default function FundraiserScene() {
                   <button
                     type="button"
                     onClick={() => setShowAddTask(false)}
-                    className="px-4 py-1.5 rounded-full border border-[var(--color-hairline)] text-[12px] font-bold bg-white"
+                    className="px-4 py-1.5 rounded-full border border-[var(--color-hairline)] text-[12px] font-bold bg-white t-button-action cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer"
+                    disabled={isCreatingTask}
+                    className="px-5 py-1.5 rounded-full bg-[var(--color-ink-deep)] text-white text-[12px] font-bold hover:bg-black cursor-pointer t-button-action inline-flex items-center gap-2"
                   >
-                    Create Task
+                    {isCreatingTask ? <ButtonSpinner size={12} /> : 'Create Task'}
                   </button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* Task Items */}
-          <div className="space-y-3">
-            {tasks.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => handleToggleTask(t.id, t.status)}
-                className="p-4 rounded-2xl border border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] flex items-center justify-between gap-4 cursor-pointer hover:border-[var(--color-ink-deep)] transition-all"
-                title="Click to toggle status (Todo -> In Progress -> Done)"
-              >
+            {/* Task Items */}
+            <div className="space-y-3">
+              {tasks.map((t) => (
+                <div
+                  key={t.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleToggleTask(t.id, t.status)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleToggleTask(t.id, t.status);
+                    }
+                  }}
+                  className="p-4 rounded-2xl border border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] flex items-center justify-between gap-4 cursor-pointer hover:border-[var(--color-ink-deep)] transition-all t-card-interactive focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  title="Click to toggle status (Todo -> In Progress -> Done)"
+                >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className={`w-3 h-3 rounded-full border ${t.status === 'done' ? 'bg-green-600 border-green-600' : 'border-gray-400'}`} />
@@ -308,7 +340,7 @@ export default function FundraiserScene() {
 
         {/* Record Cash Bake Sale Entry (1 Col) */}
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] shadow-sm space-y-4">
+          <div className="p-6 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-hairline-soft)] shadow-sm space-y-4 t-card-interactive">
             <div className="border-b border-[var(--color-hairline-soft)] pb-3">
               <h3 className="font-bold text-[18px] text-[var(--color-ink-deep)]">Record Cash Income</h3>
               <p className="text-[12px] text-[var(--color-steel)]">Bake sale quad table cash collection desk</p>
@@ -356,9 +388,10 @@ export default function FundraiserScene() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-full bg-[var(--color-ink-deep)] text-white text-[13px] font-bold hover:bg-black transition-all cursor-pointer"
+                  disabled={isPostingCash}
+                  className="w-full py-3 rounded-full bg-[var(--color-ink-deep)] text-white text-[13px] font-bold hover:bg-black transition-all cursor-pointer t-button-action flex items-center justify-center gap-2"
                 >
-                  Post Cash Entry to Ledger
+                  {isPostingCash ? <ButtonSpinner size={16} /> : 'Post Cash Entry to Ledger'}
                 </button>
               </div>
 

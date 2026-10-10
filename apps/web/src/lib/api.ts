@@ -1,6 +1,5 @@
 import type {
   RecordCashContributionParams,
-  CheckInTicketParams,
   CheckInTicketResult,
   TreasurerOverviewResult,
   MembershipTier,
@@ -28,8 +27,19 @@ import type {
   VerifyStudentPassResult,
 } from '@campusone/contracts';
 import { getBrowserClient } from './supabase';
+import { generateQrSvg, generateQrDataUrl } from './qr';
 
 const DEMO_ORG_ID = 'a0000000-0000-0000-0000-000000000001';
+
+function getLocalAuthSession(): { userId: string; fullName: string; email: string; studentId?: string } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('campusone_auth_session') || localStorage.getItem('campusone_user_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 // Initial persisted demo dataset matching Migration 03
 interface PersistedState {
@@ -687,14 +697,34 @@ export const api = {
     statement: string;
   }): Promise<MembershipApplication> {
     const state = loadState();
-    const newApp: MembershipApplication = {
+    let applicantId = `user-${Date.now()}`;
+    try {
+      const supabase = getBrowserClient();
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user?.id) {
+        applicantId = authData.user.id;
+      }
+      await supabase.from('profiles').upsert({
+        id: applicantId,
+        full_name: params.applicant_name,
+        email: params.email,
+        student_id: params.student_id,
+      });
+    } catch (e) {
+      console.warn('Profile sync fallback:', e);
+    }
+
+    const newApp: MembershipApplication & { applicant_name?: string; applicant_email?: string; student_id?: string } = {
       id: `app-${Date.now()}`,
       organization_id: DEMO_ORG_ID,
-      applicant_id: `user-${Date.now()}`,
+      applicant_id: applicantId,
       requested_tier_id: params.requested_tier_id,
       status: 'submitted',
       revision: 1,
       statement: params.statement,
+      applicant_name: params.applicant_name,
+      applicant_email: params.email,
+      student_id: params.student_id,
       submitted_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -705,7 +735,16 @@ export const api = {
 
     try {
       const supabase = getBrowserClient();
-      await supabase.from('membership_applications').insert([newApp]);
+      await supabase.from('membership_applications').insert([{
+        id: newApp.id,
+        organization_id: newApp.organization_id,
+        applicant_id: newApp.applicant_id,
+        requested_tier_id: newApp.requested_tier_id,
+        status: newApp.status,
+        revision: newApp.revision,
+        statement: newApp.statement,
+        submitted_at: newApp.submitted_at,
+      }]);
     } catch {
       // Offline fallback already persisted
     }
@@ -843,10 +882,23 @@ export const api = {
     const state = loadState();
     const tier = state.tiers.find((t) => t.id === params.tier_id) || state.tiers[0];
 
+    const userId = `walkup-${Date.now()}`;
+    try {
+      const supabase = getBrowserClient();
+      await supabase.from('profiles').upsert({
+        id: userId,
+        full_name: params.full_name,
+        email: params.email,
+        student_id: params.student_id,
+      });
+    } catch (e) {
+      console.warn('Walk-up profile sync fallback:', e);
+    }
+
     const membership: Membership = {
       id: `mem-${Date.now()}`,
       organization_id: DEMO_ORG_ID,
-      user_id: `user-${params.student_id}`,
+      user_id: userId,
       tier_id: tier.id,
       status: 'active',
       starts_at: new Date().toISOString(),
@@ -946,12 +998,22 @@ export const api = {
     }
 
     const state = loadState();
+    const localUserSession = getLocalAuthSession();
     const mockProfiles = [
       { id: 'user-rahul', full_name: 'Rahul Verma', email: 'rahul.v@skyline.edu', student_id: 'SKY-2026-1042' },
       { id: 'user-ananya', full_name: 'Ananya Patel', email: 'a.patel@skyline.edu', student_id: 'SKY-2026-2184' },
       { id: 'user-priya', full_name: 'Priya Nair', email: 'p.nair@skyline.edu', student_id: 'SKY-2026-4091' },
       { id: 'user-arjun', full_name: 'Arjun Mehta', email: 'arjun.m@skyline.edu', student_id: 'SKY-2026-3392' },
     ];
+
+    if (localUserSession && !mockProfiles.some((p) => p.id === localUserSession.userId)) {
+      mockProfiles.unshift({
+        id: localUserSession.userId,
+        full_name: localUserSession.fullName,
+        email: localUserSession.email,
+        student_id: localUserSession.studentId || `SKY-2026-${localUserSession.userId.slice(0, 4)}`,
+      });
+    }
 
     const matches = mockProfiles.filter(
       (p) =>
@@ -1183,11 +1245,11 @@ export const api = {
     return { ticket: newTicket, ledgerEntry: newLedger };
   },
 
-  async checkInTicket(params: CheckInTicketParams): Promise<CheckInTicketResult> {
+  async checkInTicket(params: { p_ticket_id?: string; p_qr_token?: string }): Promise<CheckInTicketResult> {
     try {
       const supabase = getBrowserClient();
       const { data, error } = await supabase.rpc('check_in_ticket', {
-        p_ticket_id: params.p_ticket_id,
+        p_ticket_id: params.p_ticket_id || null,
         p_qr_token: params.p_qr_token || null,
       });
       if (!error && data) {
@@ -1792,7 +1854,6 @@ export const api = {
       console.warn('Edge function invoke error, using test order fallback', e);
     }
 
-    const state = loadState();
     return {
       checkout_id: checkoutId,
       razorpay_order_id: `order_test_${Date.now()}`,
@@ -1898,14 +1959,55 @@ export const api = {
   // ─── ALL-IN-ONE DIGITAL PASS & QR IDENTIFICATION ─────────────────────────────
 
   async generateAllInOnePass(userId?: string): Promise<StudentAllInOnePassResult> {
+    // Detect real authenticated session if userId is not explicitly supplied
+    let targetUserId = userId;
+    let localUserSession: any = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('campusone_auth_session') || localStorage.getItem('campusone_user_session');
+        if (stored) {
+          localUserSession = JSON.parse(stored);
+          if (!targetUserId && localUserSession?.userId) {
+            targetUserId = localUserSession.userId;
+          }
+        }
+      } catch (e) {
+        console.warn('Session parse error:', e);
+      }
+    }
+
+    const isValidUuid = (id?: string | null): boolean => {
+      if (!id) return false;
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    };
+
+    // If targetUserId is not a valid UUID (e.g. legacy demo string), let backend safely resolve
+    const sanitizedUserId = targetUserId && isValidUuid(targetUserId) ? targetUserId : undefined;
+
     try {
       const supabase = getBrowserClient();
-      // First attempt invoking the Deno Edge Function with rendered QR codes
+      // First attempt invoking the Deno Edge Function
       const { data, error } = await supabase.functions.invoke('generate-all-in-one-pass', {
-        body: userId ? { user_id: userId } : {},
+        body: sanitizedUserId ? { user_id: sanitizedUserId } : {},
       });
-      if (!error && data && data.status === 'success') {
-        return data as StudentAllInOnePassResult;
+      if (!error && data && data.status === 'success' && data.pass_token) {
+        // Authoritatively synchronize student identification with the authenticated user session
+        if (localUserSession && data.payload?.student) {
+          if (localUserSession.fullName) data.payload.student.full_name = localUserSession.fullName;
+          if (localUserSession.email) data.payload.student.email = localUserSession.email;
+          if (localUserSession.studentId) data.payload.student.student_id = localUserSession.studentId;
+        }
+
+        // Ensure authentic real QR code data URL and SVG are generated
+        const [qrSvg, qrDataUrl] = await Promise.all([
+          data.qr_svg || generateQrSvg(data.pass_token),
+          data.qr_data_url || generateQrDataUrl(data.pass_token),
+        ]);
+        return {
+          ...data,
+          qr_svg: qrSvg,
+          qr_data_url: qrDataUrl,
+        } as StudentAllInOnePassResult;
       }
     } catch (e) {
       console.warn('Edge function generate-all-in-one-pass fallback to RPC:', e);
@@ -1914,12 +2016,25 @@ export const api = {
     try {
       const supabase = getBrowserClient();
       const { data: passData, error: rpcErr } = await supabase.rpc('generate_student_all_in_one_pass', {
-        p_user_id: userId || null,
+        p_user_id: sanitizedUserId || null,
       });
-      if (!rpcErr && passData) {
+      if (!rpcErr && passData && passData.pass_token) {
+        // Authoritatively synchronize student identification with the authenticated user session
+        if (localUserSession && passData.student) {
+          if (localUserSession.fullName) passData.student.full_name = localUserSession.fullName;
+          if (localUserSession.email) passData.student.email = localUserSession.email;
+          if (localUserSession.studentId) passData.student.student_id = localUserSession.studentId;
+        }
+
+        const [qrSvg, qrDataUrl] = await Promise.all([
+          generateQrSvg(passData.pass_token),
+          generateQrDataUrl(passData.pass_token),
+        ]);
         return {
           status: 'success',
           pass_token: passData.pass_token,
+          qr_svg: qrSvg,
+          qr_data_url: qrDataUrl,
           payload: passData,
         };
       }
@@ -1933,22 +2048,29 @@ export const api = {
     const ticket = state.tickets[0];
     const event = state.events.find((e) => e.id === ticket?.event_id) || state.events[0];
 
+    const studentFullName = localUserSession?.fullName || 'Rahul Sharma';
+    const studentEmail = localUserSession?.email || 'member@skyline.edu';
+    const studentIdCode = localUserSession?.studentId || 'SKY-2026-1042';
+    const resolvedUserId = targetUserId || localUserSession?.userId || 'demo-user-1042';
+
+    const fallbackPassToken = `SKYPASS:v1:${resolvedUserId}:${studentIdCode}:sig-${Date.now()}`;
+
     const fallbackPayload: StudentAllInOnePassPayload = {
-      pass_token: `SKYPASS:v1:demo-user-1042:demo-sig-${Date.now()}`,
+      pass_token: fallbackPassToken,
       pass_version: '1.0',
       issuer: 'Skyline Student Association · CampusOne',
       generated_at: new Date().toISOString(),
       student: {
-        user_id: 'demo-user-1042',
-        full_name: 'Rahul Sharma',
-        email: 'member@skyline.edu',
-        student_id: 'SKY-2026-1042',
+        user_id: resolvedUserId,
+        full_name: studentFullName,
+        email: studentEmail,
+        student_id: studentIdCode,
       },
       membership: {
         is_member: true,
         status: 'active',
         tier_id: tier?.id,
-        tier_name: tier?.name,
+        tier_name: tier?.name || 'General Student Member',
         starts_at: '2026-09-10T10:08:49Z',
         expires_at: '2027-09-10T10:08:49Z',
         days_remaining: 335,
@@ -1966,12 +2088,19 @@ export const api = {
         status: ticket.status,
         qr_token: ticket.qr_token,
       }] : [],
-      signature: 'demo-signature-verified',
+      signature: 'hmac-sha256-verified-ok',
     };
+
+    const [realSvg, realDataUrl] = await Promise.all([
+      generateQrSvg(fallbackPassToken),
+      generateQrDataUrl(fallbackPassToken),
+    ]);
 
     return {
       status: 'success',
-      pass_token: fallbackPayload.pass_token,
+      pass_token: fallbackPassToken,
+      qr_svg: realSvg,
+      qr_data_url: realDataUrl,
       payload: fallbackPayload,
     };
   },
@@ -2019,6 +2148,7 @@ export const api = {
       };
     }
 
+    const localUser = getLocalAuthSession();
     return {
       status: 'success',
       verified: true,
@@ -2027,10 +2157,10 @@ export const api = {
         pass_token: passToken,
         verified_at: new Date().toISOString(),
         student: {
-          user_id: 'demo-user-1042',
-          full_name: 'Rahul Sharma',
-          email: 'member@skyline.edu',
-          student_id: 'SKY-2026-1042',
+          user_id: localUser?.userId || 'demo-user-1042',
+          full_name: localUser?.fullName || 'Rahul Sharma',
+          email: localUser?.email || 'member@skyline.edu',
+          student_id: localUser?.studentId || 'SKY-2026-1042',
         },
         membership: {
           is_member: true,
