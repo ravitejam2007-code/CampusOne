@@ -106,6 +106,7 @@
     * **Scene 5 (Fundraiser):** `getActiveFundraisers`, `getFundraiserTasks`, `createTask`, `updateTaskStatus`, `recordCashContribution` (live `record_cash_contribution` RPC writing to `contributions` and immutable ledger).
     * **Scene 6 (Treasurer):** `getTreasurerOverview` (`get_treasurer_overview` RPC), `getLedgerEntries`, `getActionQueueItems`, `refreshActionQueue` (`refresh_action_queue` RPC), `resolveActionQueueItem`.
   - **Automated Verification:** Verified all 31 automated tests passing across 4 test suites. Compiled all 9 production Astro routes with 0 errors.
+  - **Documentation & Presentation:** Created comprehensive, hackathon-optimized `README.md` with badges, architecture flowcharts, deep-dives into all 6 scenes, financial ledger model, deterministic action queue, security & RLS specifications, evaluator demo accounts, and testing verification matrix. Committed and pushed to `origin/main`.
 
 ## Key Design Rules & Conventions
 
