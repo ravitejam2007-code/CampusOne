@@ -6,57 +6,57 @@ import Badge from '../components/ui/Badge.astro';
 
 const scenes = [
   {
-    scene: 'Scene 1',
-    title: 'New Student Joins',
-    desc: 'Self-service & walk-up signups, membership tiers, dues payment, and door-side lookup.',
+    category: 'Membership',
+    title: 'Membership & Dues',
+    desc: 'Self-service signups, annual membership tiers, automated benefits, and instant door-side verification.',
     href: '/memberships',
     cta: 'Explore Tiers',
-    badge: 'Memberships',
+    badge: 'Open for 2026',
     badgeVariant: 'neutral' as const,
   },
   {
-    scene: 'Scene 2',
+    category: 'Events',
     title: 'Spring Gala Tickets',
     desc: 'Tiered tickets for members & guests, real-time seat limits, and 2-second QR door check-in.',
     href: '/events',
     cta: 'View Gala Tickets',
-    badge: 'Events & QR',
-    badgeVariant: 'neutral' as const,
+    badge: 'Selling Fast',
+    badgeVariant: 'promo-yellow' as const,
   },
   {
-    scene: 'Scene 3',
+    category: 'News',
     title: 'Club Announcements',
-    desc: 'Web announcement feed, audience-targeted updates, and verifiable mailing list opt-out.',
+    desc: 'A central web announcement feed for meetings, venue updates, and mailing preferences.',
     href: '/announcements',
-    cta: 'Read Feed',
-    badge: 'Communications',
+    cta: 'Read Updates',
+    badge: 'Latest Notices',
     badgeVariant: 'neutral' as const,
   },
   {
-    scene: 'Scene 4',
-    title: 'Hoodies & Merch',
-    desc: 'Size and color variants, member discounts, and atomic stock reservation to prevent overselling.',
+    category: 'Store',
+    title: 'Hoodies & Apparel',
+    desc: 'Official Skyline pullovers with live size availability, real-time stock reservations, and member discounts.',
     href: '/merch',
-    cta: 'Browse Shop',
-    badge: 'Merchandise',
+    cta: 'Browse Merch',
+    badge: 'Limited Drop',
     badgeVariant: 'neutral' as const,
   },
   {
-    scene: 'Scene 5',
-    title: 'Bake Sale Fundraiser',
-    desc: 'Visual volunteer task board with assignees and real-time raised vs goal tracking.',
+    category: 'Fundraiser',
+    title: 'Bake Sale Campaign',
+    desc: 'Volunteer coordination task board, goal progress tracking, and on-site cash collection.',
     href: '/fundraiser',
-    cta: 'View Task Board',
-    badge: 'Fundraising',
+    cta: 'View Campaign',
+    badge: 'In Progress',
     badgeVariant: 'neutral' as const,
   },
   {
-    scene: 'Scene 6',
-    title: 'Treasurer Ledger',
-    desc: 'At-a-glance money in, money out, and net balance backed by an immutable, source-linked audit trail.',
+    category: 'Transparency',
+    title: 'Financial Overview',
+    desc: 'Transparent money in, money out, and remaining club balance with an audited, source-linked ledger.',
     href: '/treasurer',
-    cta: 'View Finances',
-    badge: 'Finance & Books',
+    cta: 'View Treasury',
+    badge: 'Audited',
     badgeVariant: 'attention' as const,
   },
 ];
@@ -142,7 +142,7 @@ const scenes = [
           <Card variant="feature" class="flex flex-col justify-between hover:border-[var(--color-ink-deep)] transition-colors">
             <div class="space-y-4">
               <div class="flex items-center justify-between">
-                <span class="text-[12px] font-mono font-bold text-[var(--color-steel)]">{s.scene}</span>
+                <span class="text-[12px] font-mono font-bold text-[var(--color-steel)]">{s.category}</span>
                 <Badge variant={s.badgeVariant}>{s.badge}</Badge>
               </div>
               <h3 class="text-2xl font-bold text-[var(--color-ink-deep)]">
@@ -163,15 +163,14 @@ const scenes = [
     </div>
   </section>
 
-  <!-- Promo Strip CTA (card-promo-strip) -->
+  <!-- Bottom CTA -->
   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
     <Card variant="promo-strip" class="text-center space-y-6">
-      <Badge variant="promo-yellow">Odoo × NMIT Hackathon 2026</Badge>
       <h2 class="text-3xl sm:text-5xl font-medium text-white max-w-3xl mx-auto leading-tight">
-        Experience the unified operating system in action.
+        Join the Skyline Student Association.
       </h2>
       <p class="text-white/80 max-w-xl mx-auto text-[16px] font-light leading-relaxed">
-        Built on Astro 5, Tailwind CSS v4, and Supabase BaaS. Ready to onboard new members, issue tickets, and close the semester books.
+        Be part of campus events, get priority gala tickets, official hoodies, and make the most of your college experience.
       </p>
       <div class="pt-2">
         <Button variant="buy-cta" size="lg" href="/memberships">

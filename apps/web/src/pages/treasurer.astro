@@ -5,28 +5,28 @@ import Card from '../components/ui/Card.astro';
 import Badge from '../components/ui/Badge.astro';
 
 const ledgerEntries = [
-  { id: 'LED-091', date: '10 Apr 2026', desc: 'Spring Gala Ticket (Online)', category: 'Tickets', method: 'Online (Test Mode)', type: 'in', amount: '₹350.00' },
-  { id: 'LED-090', date: '10 Apr 2026', desc: 'Membership Dues (VIP Tier)', category: 'Dues', method: 'Online (Test Mode)', type: 'in', amount: '₹600.00' },
+  { id: 'LED-091', date: '10 Apr 2026', desc: 'Spring Gala Ticket (Online)', category: 'Tickets', method: 'Online Payment', type: 'in', amount: '₹350.00' },
+  { id: 'LED-090', date: '10 Apr 2026', desc: 'Membership Dues (VIP Tier)', category: 'Dues', method: 'Online Payment', type: 'in', amount: '₹600.00' },
   { id: 'LED-089', date: '09 Apr 2026', desc: 'Bake Sale Cash Quad Table', category: 'Fundraiser', method: 'Staff Recorded Cash', type: 'in', amount: '₹1,200.00' },
-  { id: 'LED-088', date: '08 Apr 2026', desc: 'Heritage Hoodie (Medium)', category: 'Merchandise', method: 'Online (Test Mode)', type: 'in', amount: '₹899.00' },
+  { id: 'LED-088', date: '08 Apr 2026', desc: 'Heritage Hoodie (Medium)', category: 'Merchandise', method: 'Online Payment', type: 'in', amount: '₹899.00' },
   { id: 'LED-087', date: '07 Apr 2026', desc: 'Canopy & Table Rental Reimbursement', category: 'Expense', method: 'Direct Bank Transfer', type: 'out', amount: '₹1,450.00' },
   { id: 'LED-086', date: '05 Apr 2026', desc: 'Baking Supplies (Flour & Sugar)', category: 'Expense', method: 'Receipt Reimbursement', type: 'out', amount: '₹820.00' },
 ];
 ---
 
 <BaseLayout
-  title="CampusOne — Treasurer Ledger & Finances (Scene 6)"
-  description="Scene 6: The treasurer at the end of the semester. Real-time money in, money out, and net recorded movement."
+  title="CampusOne — Treasury & Financial Overview"
+  description="Complete financial ledger for the Skyline Student Association. Transparent money in, money out, and balanced semester accounts."
 >
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
     <!-- Header -->
     <div class="max-w-3xl">
-      <Badge variant="neutral" class="mb-3">Scene 6 · Skyline Student Association</Badge>
+      <Badge variant="neutral" class="mb-3">Financial Overview</Badge>
       <h1 class="text-4xl md:text-5xl font-medium text-[var(--color-ink-deep)] tracking-tight mb-4">
-        The treasurer, at the end of the semester.
+        Club Treasury & Ledger.
       </h1>
       <p class="text-lg text-[var(--color-steel)] font-light leading-relaxed">
-        Explain where every rupee came from and went without chasing lost notebooks or paper receipts. Every dues payment, ticket sale, merch order, and cash contribution links to an authoritative ledger entry.
+        Track where every rupee came from and went. Every dues payment, ticket sale, merch order, and cash collection links to an authoritative ledger entry.
       </p>
     </div>
 
@@ -118,7 +118,7 @@ const ledgerEntries = [
 
       <div class="pt-4 border-t border-[var(--color-hairline-soft)] flex items-center justify-between text-[12px] text-[var(--color-steel)]">
         <span>Displaying latest 6 persisted entries</span>
-        <span class="font-bold text-[var(--color-ink-deep)]">Integrity rule: No fabricated numbers</span>
+        <span class="font-bold text-[var(--color-ink-deep)]">Skyline Student Association Treasury</span>
       </div>
     </Card>
   </div>

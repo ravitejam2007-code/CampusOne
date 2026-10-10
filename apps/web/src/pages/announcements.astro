@@ -21,7 +21,7 @@ const announcements = [
     audience: 'Volunteers Only',
     badgeVariant: 'neutral' as const,
     author: 'Fundraising Lead',
-    content: 'Mandatory sync for all volunteers managing baking shifts and cash tables this Thursday at 5:00 PM. We will assign table shifts and review the cash entry RPC protocol.',
+    content: 'Mandatory briefing for all volunteers managing baking shifts and cash tables this Thursday at 5:00 PM in Room 302.',
   },
   {
     id: 3,
@@ -36,18 +36,18 @@ const announcements = [
 ---
 
 <BaseLayout
-  title="CampusOne — Club Announcements & Feed (Scene 3)"
-  description="Scene 3: Announcing the next meeting. Audience-targeted web feed and mailing list preferences."
+  title="CampusOne — Club Announcements & Feed"
+  description="Official Skyline Student Association announcement feed. Meeting dates, gala updates, and newsletter preferences."
 >
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
     <!-- Header -->
     <div class="max-w-3xl">
-      <Badge variant="neutral" class="mb-3">Scene 3 · Skyline Student Association</Badge>
+      <Badge variant="neutral" class="mb-3">Official Bulletin</Badge>
       <h1 class="text-4xl md:text-5xl font-medium text-[var(--color-ink-deep)] tracking-tight mb-4">
-        Announcements that never get lost in a group chat.
+        Announcements & Meeting Notices
       </h1>
       <p class="text-lg text-[var(--color-steel)] font-light leading-relaxed">
-        A single verified web feed reaching everyone with audience scoping. Keep an immutable record of what was said and when, paired with verifiable email preferences.
+        Stay updated with official Skyline Student Association notices, venue schedules, and volunteer briefings in one place.
       </p>
     </div>
 
@@ -61,7 +61,7 @@ const announcements = [
             <Button variant="pill-tab">General Members</Button>
             <Button variant="pill-tab">Volunteers</Button>
           </div>
-          <span class="text-[13px] text-[var(--color-steel)]">3 published records</span>
+          <span class="text-[13px] text-[var(--color-steel)]">3 published updates</span>
         </div>
 
         {
@@ -79,7 +79,7 @@ const announcements = [
               </p>
               <div class="pt-3 border-t border-[var(--color-hairline-soft)] flex items-center justify-between text-[12px] text-[var(--color-steel)]">
                 <span>Posted by {a.author}</span>
-                <span class="text-[var(--color-success)] font-bold">✓ Persisted in Supabase</span>
+                <span class="text-[var(--color-success)] font-bold">✓ Verified Notice</span>
               </div>
             </Card>
           ))
