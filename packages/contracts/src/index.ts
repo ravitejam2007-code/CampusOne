@@ -523,3 +523,77 @@ export interface WalkUpSignupParams {
   payment_method: 'cash' | 'manual_upi';
   notes?: string;
 }
+
+// ─── Phase 3: Razorpay & Edge Function Contracts ─────────────────────────────
+
+export interface CreatePaymentOrderInput {
+  checkout_id: string;
+}
+
+export interface CreatePaymentOrderResponse {
+  checkout_id: string;
+  razorpay_order_id: string;
+  amount: number;
+  currency: string;
+  key_id: string;
+}
+
+export interface VerifyPaymentInput {
+  checkout_id: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+export interface VerifyPaymentResponse {
+  checkout_id: string;
+  payment_status: 'verified';
+  checkout_status: 'fulfilled';
+  fulfilment?: FulfillCheckoutResult;
+}
+
+export interface RecordManualPaymentInput {
+  checkout_id: string;
+  payment_method: 'cash' | 'manual_upi';
+  amount_paise: number;
+  reference?: string;
+  notes?: string;
+}
+
+export interface RecordManualPaymentResponse {
+  checkout_id: string;
+  payment_method: 'cash' | 'manual_upi';
+  payment_status: 'captured';
+  checkout_status: 'fulfilled';
+  fulfilment?: FulfillCheckoutResult;
+}
+
+export interface RazorpayWebhookPayload {
+  entity: string;
+  account_id: string;
+  event: string;
+  contains: string[];
+  payload: {
+    payment?: {
+      entity: {
+        id: string;
+        amount: number;
+        currency: string;
+        status: string;
+        order_id?: string;
+        notes?: Record<string, string>;
+      };
+    };
+    order?: {
+      entity: {
+        id: string;
+        amount: number;
+        currency: string;
+        status: string;
+        notes?: Record<string, string>;
+      };
+    };
+  };
+  created_at: number;
+}
+
