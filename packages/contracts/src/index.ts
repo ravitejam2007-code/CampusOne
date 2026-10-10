@@ -597,3 +597,77 @@ export interface RazorpayWebhookPayload {
   created_at: number;
 }
 
+// ─── All-in-One Digital Student Pass & QR Identification ─────────────────────
+
+export interface StudentPassMembershipInfo {
+  is_member: boolean;
+  status: 'active' | 'expired' | 'none';
+  membership_id?: string | null;
+  tier_id?: string | null;
+  tier_name?: string | null;
+  starts_at?: string | null;
+  expires_at?: string | null;
+  days_remaining?: number | null;
+  ticket_discount_percent: number;
+  merch_discount_percent: number;
+  benefits?: string[];
+}
+
+export interface StudentPassEventTicket {
+  ticket_id: string;
+  event_id: string;
+  event_title: string;
+  venue: string;
+  starts_at: string;
+  ends_at?: string;
+  ticket_type_id?: string;
+  ticket_type_name: string;
+  status: 'issued' | 'checked_in' | 'cancelled';
+  qr_token: string;
+  issued_at?: string;
+}
+
+export interface StudentAllInOnePassPayload {
+  pass_token: string;
+  pass_version: string;
+  issuer: string;
+  generated_at: string;
+  student: {
+    user_id: string;
+    full_name: string;
+    email: string;
+    student_id?: string | null;
+  };
+  membership: StudentPassMembershipInfo;
+  upcoming_events: StudentPassEventTicket[];
+  signature: string;
+}
+
+export interface StudentAllInOnePassResult {
+  status: 'success';
+  pass_token: string;
+  qr_data_url?: string;
+  qr_svg?: string;
+  payload: StudentAllInOnePassPayload;
+}
+
+export interface VerifyStudentPassResult {
+  status: 'success' | 'error';
+  verified: boolean;
+  data?: {
+    valid: boolean;
+    pass_token: string;
+    verified_at: string;
+    verified_by?: string;
+    student: {
+      user_id: string;
+      full_name: string;
+      email: string;
+      student_id?: string | null;
+    };
+    membership: StudentPassMembershipInfo;
+    upcoming_events: StudentPassEventTicket[];
+  };
+  reason?: string;
+}
+

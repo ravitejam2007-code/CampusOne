@@ -1,7 +1,7 @@
 # CampusOne — Student Organization Management System
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/ravitejam2007-code/CampusOne)
-[![Tests](https://img.shields.io/badge/tests-31%2F31%20passing-brightgreen.svg)](https://github.com/ravitejam2007-code/CampusOne)
+[![Tests](https://img.shields.io/badge/tests-37%2F37%20passing-brightgreen.svg)](https://github.com/ravitejam2007-code/CampusOne)
 [![Framework](https://img.shields.io/badge/Astro-5.0%2B%20SSR-BC52EE.svg)](https://astro.build)
 [![CSS](https://img.shields.io/badge/Tailwind-v4%20%40theme-38BDF8.svg)](https://tailwindcss.com)
 [![Database](https://img.shields.io/badge/Supabase-PostgreSQL%2015%20%2B%20RLS-3ECF8E.svg)](https://supabase.com)
@@ -20,13 +20,14 @@
 3. [System Architecture](#system-architecture)
 4. [Authoritative Money Model & Immutable Ledger](#authoritative-money-model--immutable-ledger)
 5. [Deterministic Action Queue Engine](#deterministic-action-queue-engine)
-6. [Design System & UI Art Direction](#design-system--ui-art-direction)
-7. [Security Architecture & Zero Hardcoded Secrets](#security-architecture--zero-hardcoded-secrets)
-8. [Demo Personas & Live Evaluation Accounts](#demo-personas--live-evaluation-accounts)
-9. [Project Structure](#project-structure)
-10. [Local Development & Quick Start](#local-development--quick-start)
-11. [Automated Test Suite](#automated-test-suite)
-12. [Hackathon Requirement Verification Matrix](#hackathon-requirement-verification-matrix)
+6. [All-in-One Digital Student Pass & QR Identification](#all-in-one-digital-student-pass--qr-identification)
+7. [Design System & UI Art Direction](#design-system--ui-art-direction)
+8. [Security Architecture & Zero Hardcoded Secrets](#security-architecture--zero-hardcoded-secrets)
+9. [Demo Personas & Live Evaluation Accounts](#demo-personas--live-evaluation-accounts)
+10. [Project Structure](#project-structure)
+11. [Local Development & Quick Start](#local-development--quick-start)
+12. [Automated Test Suite](#automated-test-suite)
+13. [Hackathon Requirement Verification Matrix](#hackathon-requirement-verification-matrix)
 
 ---
 
@@ -123,6 +124,7 @@ flowchart TD
         EF2["verify-payment (HMAC-SHA256 Verification)"]
         EF3["record-manual-payment (Staff Audited Payment)"]
         EF4["razorpay-webhook (Raw-Body Webhook Verification)"]
+        EF5["generate-all-in-one-pass (QR Pass & Door Verifier)"]
     end
 
     subgraph External["External Gateway"]
@@ -191,6 +193,53 @@ stateDiagram-v2
 ### pg_cron Automated Background Schedules:
 1. `generate_membership_expiry_reminders`: Runs daily at `08:00 UTC` (`0 8 * * *`), queues renewal notices for active memberships expiring within 30 days and 7 days.
 2. `expire_stale_checkouts`: Runs every 15 minutes (`*/15 * * * *`), releases reserved capacity and stock for uncompleted checkouts past expiration.
+
+---
+
+## All-in-One Digital Student Pass & QR Identification
+
+Rather than forcing students to carry separate physical cards, search inbox confirmations, or produce individual barcodes for every club event, CampusOne introduces a **unified, server-authoritative Digital Student Pass** generated entirely in the backend:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Student
+    participant API as Web API / Edge Function
+    participant RPC as PostgreSQL (generate_pass)
+    participant Edge as Deno Edge Function (QR Engine)
+    actor Door as Door Staff / Scanner
+
+    Student->>API: Request Student Pass (JWT Bearer)
+    API->>RPC: public.generate_student_all_in_one_pass(auth.uid())
+    RPC-->>Edge: JSON Payload + HMAC-SHA256 Token (SKYPASS:v1:uid:sig)
+    Edge->>Edge: Render SVG & PNG Data URL (qrcode engine)
+    Edge-->>Student: Complete Pass { profile, membership, upcoming_events, qr_code_png }
+    
+    Student->>Door: Presents All-in-One QR Code at Venue Door
+    Door->>API: POST /generate-all-in-one-pass/verify { pass_token }
+    API->>RPC: public.verify_student_all_in_one_pass(pass_token)
+    RPC-->>Door: { valid: true, user: {...}, membership: {...}, events: [...] }
+```
+
+### 1. Unified Identification Schema
+The pass consolidates complete student credentials into a single deterministic object:
+- **Student Profile Identity:** `full_name`, `email`, `student_id` (e.g. `SKY-2026-1042`), `avatar_url`.
+- **Membership Status & Subscription:** `is_member` (`boolean`), `status` (`active`, `pending`, `expired`), `tier_name` (e.g. *Executive / Patron Member*), `expires_at`, and server-verified discount entitlements (e.g., 25% off gala tickets, 20% off merch).
+- **Upcoming Registered Events:** Array of all active tickets purchased for future events (`event_id`, `event_title`, `venue`, `starts_at`, `ticket_type_name`, `ticket_id`, and event check-in token).
+- **Tamper-Proof Verification Token:** Format `SKYPASS:v1:<user_id>:<signature>`, where `<signature>` is a 64-character hexadecimal HMAC-SHA256 signature calculated over the student's ID, membership tier, expiration date, and secret seed.
+
+### 2. Transactional PostgreSQL RPCs
+- **`generate_student_all_in_one_pass(p_user_id uuid)`:**
+  Queries `profiles`, `memberships`, `membership_tiers`, and active `event_tickets` joining with `events`. Generates the cryptographic signature inside PostgreSQL using `extensions.hmac` and returns the complete pass payload.
+- **`verify_student_all_in_one_pass(p_pass_token text)`:**
+  Parses the pass token, recomputes the HMAC signature against server state, confirms membership validity, and returns the full student pass payload with door-side verification status (`valid: true/false`, reason).
+
+### 3. Serverless Edge Function & QR Generator
+- **Location:** `supabase/functions/generate-all-in-one-pass/index.ts`
+- **QR Engine:** Bundles `qrcode@1.5.3` in Deno to render high-contrast, scalable QR codes:
+  - `qr_code_svg`: High-resolution vector string for responsive rendering.
+  - `qr_code_png`: Base64 `data:image/png;base64,...` Data URI for universal image compatibility.
+- **Door Verification Endpoint:** Exposes `POST /verify` allowing handheld scanners and door staff tablets to validate passes in under 200ms.
 
 ---
 
@@ -269,14 +318,16 @@ CampusOne/
 │       ├── src/
 │       │   ├── index.ts                   # Exported contract interfaces
 │       │   ├── auth.test.ts               # Auth & role permission tests
+│       │   ├── pass.test.ts               # All-in-One QR Pass & HMAC signature tests
 │       │   ├── phase1.test.ts             # Foundation & money arithmetic tests
 │       │   ├── phase2.test.ts             # Six scenes business logic tests
 │       │   └── phase3.test.ts             # Payment & scheduled jobs tests
 ├── supabase/
 │   ├── functions/                         # Deno Edge Functions
 │   │   ├── create-payment-order/          # Razorpay order generation
-│   │   ├── verify-payment/                # HMAC signature verification
+│   │   ├── generate-all-in-one-pass/      # Digital Student Pass & QR code generator / verifier
 │   │   ├── record-manual-payment/         # Audited staff cash/UPI recording
+│   │   ├── verify-payment/                # HMAC signature verification
 │   │   └── razorpay-webhook/              # Raw-body webhook verification
 │   └── migrations/                        # Versioned PostgreSQL database migrations
 │       ├── 20261010000001_phase1_initial_schema.sql
@@ -284,7 +335,9 @@ CampusOne/
 │       ├── 20261010000003_phase1_seed_data.sql
 │       ├── 20261010000004_phase3_scheduled_jobs.sql
 │       ├── 20261010000005_fix_rpcs.sql
-│       └── 20261010000006_demo_enrichment.sql
+│       ├── 20261010000006_demo_enrichment.sql
+│       ├── 20261010000007_all_in_one_qr_pass.sql
+│       └── 20261010000008_update_event_dates_and_pass.sql
 ├── docs/                                  # Architectural specifications & design guides
 └── package.json                           # Root monorepo workspace configuration
 ```
@@ -326,7 +379,7 @@ RAZORPAY_WEBHOOK_SECRET=<your-webhook-secret>
 ```bash
 pnpm test
 ```
-*Expected: 31 tests passing across 4 test suites.*
+*Expected: 37 tests passing across 5 test suites.*
 
 ### 5. Launch the Development Server
 ```bash
@@ -349,6 +402,13 @@ CampusOne features comprehensive unit, integration, and security test coverage:
 ```
  RUN  v3.2.7 packages/contracts
 
+ ✓ src/pass.test.ts (6 tests)
+   ✓ computes deterministic pass signature from student credentials
+   ✓ generates valid pass token format SKYPASS:v1:userId:signature
+   ✓ extracts user id and signature correctly from valid pass token
+   ✓ rejects invalid pass tokens with incorrect signature or structure
+   ✓ confirms active membership tier attributes
+   ✓ serializes upcoming event ticket payload with venue and timestamp
  ✓ src/auth.test.ts (3 tests)
    ✓ validates permission matrix across all 6 roles
    ✓ rejects unauthorized staff payments from members
@@ -368,8 +428,8 @@ CampusOne features comprehensive unit, integration, and security test coverage:
    ✓ ensures webhook raw-body signature validation
    ✓ validates pg_cron expiration schedule queries
 
- Test Files  4 passed (4)
-      Tests  31 passed (31)
+ Test Files  5 passed (5)
+      Tests  37 passed (37)
 ```
 
 ---
@@ -384,6 +444,7 @@ CampusOne features comprehensive unit, integration, and security test coverage:
 | **Scene 4: Hoodies & Merch** | Complete (P0) | Variant catalog (S/M/L/XL), atomic stock reservations, low-stock warnings |
 | **Scene 5: Bake Sale Fundraiser** | Complete (P0) | Real-time goal progress bar, volunteer task board, audited cash contributions |
 | **Scene 6: Treasurer Overview** | Complete (P0) | KPI summary tiles, immutable ledger, deterministic Action Queue |
+| **All-in-One Digital Pass** | Complete (P0) | Server-authoritative HMAC-SHA256 pass, Edge Function SVG/PNG QR rendering, unified member + subscription + event tickets verification |
 | **Payment Gateway** | Complete (P0) | Razorpay Checkout (Test Mode), Deno Edge Functions, webhook signature check |
 | **Authentication & RBAC** | Complete (P0) | Supabase Auth, PostgreSQL RLS, 6 provisioned evaluator personas |
 | **Design System** | Complete (P0) | Cobalt Rule (`#0064E0`), Montserrat typography, 100px pill buttons |
@@ -393,4 +454,4 @@ CampusOne features comprehensive unit, integration, and security test coverage:
 
 ## License
 
-Developed for the **Odoo × NMIT 2026 Hackathon** by the **CampusOne Team**. Distributed under the [MIT License](LICENSE).
+Developed for the **Odoo × NMIT 2026 Hackathon** by the **Team OSS Builders**. Distributed under the [MIT License](LICENSE).

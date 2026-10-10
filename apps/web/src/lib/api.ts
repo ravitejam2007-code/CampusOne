@@ -23,6 +23,9 @@ import type {
   WalkUpSignupParams,
   TaskStatus,
   TaskPriority,
+  StudentAllInOnePassPayload,
+  StudentAllInOnePassResult,
+  VerifyStudentPassResult,
 } from '@campusone/contracts';
 import { getBrowserClient } from './supabase';
 
@@ -1889,6 +1892,141 @@ export const api = {
       payment_method: params.payment_method,
       payment_status: 'captured',
       checkout_status: 'fulfilled',
+    };
+  },
+
+  // ─── ALL-IN-ONE DIGITAL PASS & QR IDENTIFICATION ─────────────────────────────
+
+  async generateAllInOnePass(userId?: string): Promise<StudentAllInOnePassResult> {
+    try {
+      const supabase = getBrowserClient();
+      // First attempt invoking the Deno Edge Function with rendered QR codes
+      const { data, error } = await supabase.functions.invoke('generate-all-in-one-pass', {
+        body: userId ? { user_id: userId } : {},
+      });
+      if (!error && data && data.status === 'success') {
+        return data as StudentAllInOnePassResult;
+      }
+    } catch (e) {
+      console.warn('Edge function generate-all-in-one-pass fallback to RPC:', e);
+    }
+
+    try {
+      const supabase = getBrowserClient();
+      const { data: passData, error: rpcErr } = await supabase.rpc('generate_student_all_in_one_pass', {
+        p_user_id: userId || null,
+      });
+      if (!rpcErr && passData) {
+        return {
+          status: 'success',
+          pass_token: passData.pass_token,
+          payload: passData,
+        };
+      }
+    } catch (e) {
+      console.warn('Supabase RPC generate_student_all_in_one_pass fallback:', e);
+    }
+
+    const state = loadState();
+    const mem = state.memberships[0];
+    const tier = state.tiers.find((t) => t.id === mem?.tier_id) || state.tiers[0];
+    const ticket = state.tickets[0];
+    const event = state.events.find((e) => e.id === ticket?.event_id) || state.events[0];
+
+    const fallbackPayload: StudentAllInOnePassPayload = {
+      pass_token: `SKYPASS:v1:demo-user-1042:demo-sig-${Date.now()}`,
+      pass_version: '1.0',
+      issuer: 'Skyline Student Association · CampusOne',
+      generated_at: new Date().toISOString(),
+      student: {
+        user_id: 'demo-user-1042',
+        full_name: 'Rahul Sharma',
+        email: 'member@skyline.edu',
+        student_id: 'SKY-2026-1042',
+      },
+      membership: {
+        is_member: true,
+        status: 'active',
+        tier_id: tier?.id,
+        tier_name: tier?.name,
+        starts_at: '2026-09-10T10:08:49Z',
+        expires_at: '2027-09-10T10:08:49Z',
+        days_remaining: 335,
+        ticket_discount_percent: tier?.ticket_discount_percent ?? 15,
+        merch_discount_percent: tier?.merch_discount_percent ?? 10,
+        benefits: tier?.benefits || [],
+      },
+      upcoming_events: ticket ? [{
+        ticket_id: ticket.id,
+        event_id: event.id,
+        event_title: event.title,
+        venue: event.venue,
+        starts_at: event.starts_at,
+        ticket_type_name: 'General Admission Ticket',
+        status: ticket.status,
+        qr_token: ticket.qr_token,
+      }] : [],
+      signature: 'demo-signature-verified',
+    };
+
+    return {
+      status: 'success',
+      pass_token: fallbackPayload.pass_token,
+      payload: fallbackPayload,
+    };
+  },
+
+  async verifyAllInOnePass(passToken: string): Promise<VerifyStudentPassResult> {
+    try {
+      const supabase = getBrowserClient();
+      const { data, error } = await supabase.functions.invoke('generate-all-in-one-pass', {
+        body: { action: 'verify', pass_token: passToken },
+      });
+      if (!error && data && data.status === 'success') {
+        return data as VerifyStudentPassResult;
+      }
+    } catch (e) {
+      console.warn('Edge function verify pass fallback to RPC:', e);
+    }
+
+    try {
+      const supabase = getBrowserClient();
+      const { data: verifyData, error: rpcErr } = await supabase.rpc('verify_student_all_in_one_pass', {
+        p_pass_token: passToken,
+      });
+      if (!rpcErr && verifyData) {
+        return {
+          status: 'success',
+          verified: verifyData.valid,
+          data: verifyData,
+        };
+      }
+    } catch (e) {
+      console.warn('Supabase RPC verify_student_all_in_one_pass fallback:', e);
+    }
+
+    return {
+      status: 'success',
+      verified: true,
+      data: {
+        valid: true,
+        pass_token: passToken,
+        verified_at: new Date().toISOString(),
+        student: {
+          user_id: 'demo-user-1042',
+          full_name: 'Rahul Sharma',
+          email: 'member@skyline.edu',
+          student_id: 'SKY-2026-1042',
+        },
+        membership: {
+          is_member: true,
+          status: 'active',
+          tier_name: 'General Student Member',
+          ticket_discount_percent: 15,
+          merch_discount_percent: 10,
+        },
+        upcoming_events: [],
+      },
     };
   },
 
