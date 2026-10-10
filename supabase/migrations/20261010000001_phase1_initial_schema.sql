@@ -8,70 +8,7 @@
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
--- 2. HELPER FUNCTIONS (Security Invoker / Definer for RLS)
-create or replace function public.has_role(check_user_id uuid, check_role text)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.user_roles
-    where user_id = check_user_id
-      and role = check_role
-      and (expires_at is null or expires_at > now())
-  );
-$$;
-
-create or replace function public.is_org_staff(check_user_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.user_roles
-    where user_id = check_user_id
-      and role in ('admin', 'treasurer', 'door_staff', 'volunteer')
-      and (expires_at is null or expires_at > now())
-  );
-$$;
-
-create or replace function public.is_org_admin(check_user_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.user_roles
-    where user_id = check_user_id
-      and role = 'admin'
-      and (expires_at is null or expires_at > now())
-  );
-$$;
-
-create or replace function public.get_user_discounts(check_user_id uuid)
-returns table (ticket_discount numeric, merch_discount numeric)
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select 
-    coalesce(max(mt.ticket_discount_percent), 0) as ticket_discount,
-    coalesce(max(mt.merch_discount_percent), 0) as merch_discount
-  from public.memberships m
-  join public.membership_tiers mt on mt.id = m.tier_id
-  where m.user_id = check_user_id
-    and m.status = 'active'
-    and m.expires_at > now();
-$$;
-
--- 3. CORE IDENTITY & ORGANIZATIONS
+-- 2. CORE IDENTITY & ORGANIZATIONS
 create table if not exists public.organizations (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -524,6 +461,72 @@ create index if not exists idx_audit_entity on public.audit_logs(entity_type, en
 create index if not exists idx_action_queue_org on public.action_queue_items(organization_id);
 create index if not exists idx_action_queue_status on public.action_queue_items(status);
 create index if not exists idx_action_queue_dedupe on public.action_queue_items(dedupe_key);
+
+-- ==============================================================================
+-- 12. HELPER FUNCTIONS (Security Invoker / Definer for RLS)
+-- ==============================================================================
+
+create or replace function public.has_role(check_user_id uuid, check_role text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.user_roles
+    where user_id = check_user_id
+      and role = check_role
+      and (expires_at is null or expires_at > now())
+  );
+$$;
+
+create or replace function public.is_org_staff(check_user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.user_roles
+    where user_id = check_user_id
+      and role in ('admin', 'treasurer', 'door_staff', 'volunteer')
+      and (expires_at is null or expires_at > now())
+  );
+$$;
+
+create or replace function public.is_org_admin(check_user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.user_roles
+    where user_id = check_user_id
+      and role = 'admin'
+      and (expires_at is null or expires_at > now())
+  );
+$$;
+
+create or replace function public.get_user_discounts(check_user_id uuid)
+returns table (ticket_discount numeric, merch_discount numeric)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select 
+    coalesce(max(mt.ticket_discount_percent), 0) as ticket_discount,
+    coalesce(max(mt.merch_discount_percent), 0) as merch_discount
+  from public.memberships m
+  join public.membership_tiers mt on mt.id = m.tier_id
+  where m.user_id = check_user_id
+    and m.status = 'active'
+    and m.expires_at > now();
+$$;
 
 -- ==============================================================================
 -- 13. ROW LEVEL SECURITY (RLS) POLICIES

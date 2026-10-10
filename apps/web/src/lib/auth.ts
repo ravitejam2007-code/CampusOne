@@ -1,4 +1,4 @@
-import type { RoleType, UserRole } from '@campusone/contracts';
+import type { RoleType } from '@campusone/contracts';
 import { getBrowserClient } from './supabase';
 
 export interface UserSession {

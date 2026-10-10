@@ -47,6 +47,7 @@
   - Implemented and verified automated test suite in `packages/contracts/src/phase1.test.ts` with 9 passing tests covering role-permission matrix, discount arithmetic, capacity limits, and ledger balancing.
   - Confirmed 0 errors on production Astro build (`astro build` -> 7 scene routes generated).
   - Fixed GitHub Actions CI workflow (`.github/workflows/ci.yml`): eliminated invalid `node-modules-cache` parameter, specified Node.js 22 LTS, pinned `ubuntu-24.04` runner, and integrated automated test step (`pnpm test`).
+  - Executed `supabase db push` against remote Supabase project `leifxoxnqnvezbmdtmcr` (CampusOne - Odoo X NMIT 2026), successfully applying migrations 1, 2, and 3 (`20261010000001_phase1_initial_schema.sql`, `20261010000002_phase1_rpcs.sql`, `20261010000003_phase1_seed_data.sql`). Verified via `supabase migration list`.
 
 ## Key Design Rules & Conventions
 - **Cobalt Rule:** `#0064E0` is strictly reserved for buy-now / checkout flows (`Add to cart`, `Buy Tickets`, `Pay Dues`). Marketing and general CTAs use black pill buttons (`#000000`).

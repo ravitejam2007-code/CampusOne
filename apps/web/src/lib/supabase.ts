@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { createServerClient, parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
+import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import type { AstroCookies } from 'astro';
 
 // Environment variables
