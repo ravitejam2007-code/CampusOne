@@ -167,6 +167,25 @@
     * Unauthorized door scanner -> `403 FORBIDDEN`
     * Malformed token presented to authorized door staff -> `200 OK` with `verified: false` and explanatory reason.
 
+- [x] **Phase 8: Frontend Developer API Connection Guide & Teammate Documentation:**
+  - **Comprehensive Guide Created (`docs/FRONTEND_API_GUIDE.md`):**
+    * Authoritative reference for teammates and frontend engineers building or refining the UI.
+    * Environment configuration (`PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `PUBLIC_RAZORPAY_KEY_ID`) with zero exposed secrets.
+    * 6 Pre-seeded evaluator personas with emails, credentials, and role matrices (`admin`, `treasurer`, `door`, `volunteer`, `member`, `applicant`).
+    * Dual connection pathways documented: TypeScript SDK (`@campusone/contracts` + `apps/web/src/lib/api.ts`) vs Direct HTTP REST / `@supabase/supabase-js`.
+    * Authentication lifecycle: login, registration, password sign-in, token refresh, and bearer authorization header propagation.
+    * Complete endpoint catalog across all 6 challenge scenes:
+      - **Scene 1 (Memberships):** Tiers list, application submission, admin review loop, door lookup, walk-up dues payment.
+      - **Scene 2 (Events & Gala):** Event listings, ticket inventory gauges, member-discounted ticket purchase, 2-second QR door check-in, attendance statistics.
+      - **Scene 3 (Announcements):** Audience-filtered announcement feed, admin publisher, notification/mailing preferences.
+      - **Scene 4 (Merch Store):** Variant matrices (sizes/colors), atomic stock decrement checkout, member discount application.
+      - **Scene 5 (Fundraiser & Bake Sale):** Goal vs raised progress bar, drag-and-drop volunteer task board, cash bake sale recording.
+      - **Scene 6 (Treasurer Overview):** Real-time financial summary RPC, double-entry immutable ledger table, deterministic action queue resolution.
+    * Dedicated guides for **All-in-One Student Pass & QR Generation** (`generate-all-in-one-pass`, door verification, plug-and-play React island template).
+    * End-to-end **Razorpay Checkout** guide (order creation, JS checkout modal, HMAC verification, webhook idempotency, cash fallback).
+    * **Standard Error Handling Protocol**: Standard error payload format, mapping table for all 11 error codes with HTTP status codes, and user-friendly error toast handling recipe.
+    * **Design System Cheat Sheet**: Rules for the Cobalt CTA, Pill shape signature (`rounded-full`), typography stack (Montserrat), and flat baseline elevation.
+
 ## All-in-One Pass API Reference & Technical Specification
 
 ### 1. Data Schema Contracts (`@campusone/contracts`)
