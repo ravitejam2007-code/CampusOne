@@ -2,6 +2,7 @@
 import Navbar from '../components/layout/Navbar.astro';
 import Footer from '../components/layout/Footer.astro';
 import PromoBanner from '../components/ui/PromoBanner.astro';
+import RoleSwitcher from '../components/scenes/RoleSwitcher';
 import '../styles/global.css';
 
 interface Props {
@@ -27,6 +28,7 @@ const {
     <meta name="description" content={description} />
   </head>
   <body class="min-h-full flex flex-col antialiased selection:bg-[var(--color-primary)] selection:text-white">
+    <RoleSwitcher client:load />
     {
       showDemoBanner && (
         <PromoBanner variant="dark">

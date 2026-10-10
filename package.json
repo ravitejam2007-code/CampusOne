@@ -4,11 +4,15 @@
   "private": true,
   "description": "CampusOne — Student Organization Management System for Skyline Student Association (Odoo x NMIT Hackathon)",
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
-    "preview": "pnpm --filter web preview",
-    "check": "pnpm --filter web check",
-    "test": "pnpm --filter @campusone/contracts test"
+    "dev": "astro dev --root apps/web",
+    "build": "astro build --root apps/web",
+    "preview": "astro preview --root apps/web",
+    "check": "astro check --root apps/web",
+    "test": "vitest run"
   },
-  "packageManager": "pnpm@11.8.0"
+  "packageManager": "pnpm@11.8.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

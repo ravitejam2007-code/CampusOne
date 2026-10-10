@@ -1,45 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Button from '../components/ui/Button.astro';
-import Card from '../components/ui/Card.astro';
 import Badge from '../components/ui/Badge.astro';
-
-const announcements = [
-  {
-    id: 1,
-    title: 'Spring Gala Venue Change & Costume Guidelines',
-    date: 'April 10, 2026',
-    audience: 'All Members',
-    badgeVariant: 'promo-yellow' as const,
-    author: 'President, Skyline SA',
-    content: 'Due to overwhelming ticket interest, the 2026 Masquerade Gala has been moved to the Main Ballroom. Doors open at 7:00 PM sharp. Traditional masks or black-tie attire requested.',
-  },
-  {
-    id: 2,
-    title: 'Bake Sale Volunteer Briefing — Room 302',
-    date: 'April 08, 2026',
-    audience: 'Volunteers Only',
-    badgeVariant: 'neutral' as const,
-    author: 'Fundraising Lead',
-    content: 'Mandatory briefing for all volunteers managing baking shifts and cash tables this Thursday at 5:00 PM in Room 302.',
-  },
-  {
-    id: 3,
-    title: 'Semester General Body Meeting & Budget Review',
-    date: 'April 02, 2026',
-    audience: 'Public & Members',
-    badgeVariant: 'success' as const,
-    author: 'Treasurer',
-    content: 'Reviewing our Q1 finances and open task allocations. Open to all students interested in running for executive positions in the upcoming academic year.',
-  },
-];
+import AnnouncementsScene from '../components/scenes/AnnouncementsScene';
 ---
 
 <BaseLayout
   title="CampusOne — Club Announcements & Feed"
   description="Official Skyline Student Association announcement feed. Meeting dates, gala updates, and newsletter preferences."
 >
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-12">
     <!-- Header -->
     <div class="max-w-3xl">
       <Badge variant="neutral" class="mb-3">Official Bulletin</Badge>
@@ -51,85 +20,7 @@ const announcements = [
       </p>
     </div>
 
-    <!-- Feed & Subscription Sidebar Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Announcement Feed (2 Columns) -->
-      <div class="lg:col-span-2 space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-[var(--color-hairline-soft)]">
-          <div class="flex items-center gap-2">
-            <Button variant="pill-tab" active={true}>All Posts</Button>
-            <Button variant="pill-tab">General Members</Button>
-            <Button variant="pill-tab">Volunteers</Button>
-          </div>
-          <span class="text-[13px] text-[var(--color-steel)]">3 published updates</span>
-        </div>
-
-        {
-          announcements.map((a) => (
-            <Card variant="feature" class="space-y-4">
-              <div class="flex items-center justify-between">
-                <Badge variant={a.badgeVariant}>{a.audience}</Badge>
-                <span class="text-[12px] text-[var(--color-steel)] font-mono">{a.date}</span>
-              </div>
-              <h3 class="text-2xl font-bold text-[var(--color-ink-deep)]">
-                {a.title}
-              </h3>
-              <p class="text-[15px] text-[var(--color-ink)] leading-relaxed tracking-[-0.16px]">
-                {a.content}
-              </p>
-              <div class="pt-3 border-t border-[var(--color-hairline-soft)] flex items-center justify-between text-[12px] text-[var(--color-steel)]">
-                <span>Posted by {a.author}</span>
-                <span class="text-[var(--color-success)] font-bold">✓ Verified Notice</span>
-              </div>
-            </Card>
-          ))
-        }
-      </div>
-
-      <!-- Mailing List Preferences Sidebar (card-checkout-summary 16px) -->
-      <div class="space-y-6">
-        <Card variant="checkout" class="space-y-6">
-          <div class="border-b border-[var(--color-hairline-soft)] pb-4">
-            <h3 class="font-bold text-[18px] text-[var(--color-ink-deep)] mb-1">Mailing Preferences</h3>
-            <p class="text-[13px] text-[var(--color-steel)]">Separate from login identity. Honor member opt-outs.</p>
-          </div>
-
-          <div class="space-y-4 text-[14px]">
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked class="mt-1 accent-[var(--color-fb-blue)] w-4 h-4 rounded" />
-              <div>
-                <span class="font-bold text-[var(--color-ink)]">Urgent Meeting & Venue Alerts</span>
-                <p class="text-[12px] text-[var(--color-steel)]">Immediate notifications about schedule or venue shifts.</p>
-              </div>
-            </label>
-
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked class="mt-1 accent-[var(--color-fb-blue)] w-4 h-4 rounded" />
-              <div>
-                <span class="font-bold text-[var(--color-ink)]">Event Reminders & Gala Updates</span>
-                <p class="text-[12px] text-[var(--color-steel)]">Ticket release dates, seat alerts, and check-in details.</p>
-              </div>
-            </label>
-
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" class="mt-1 accent-[var(--color-fb-blue)] w-4 h-4 rounded" />
-              <div>
-                <span class="font-bold text-[var(--color-ink)]">Merch Drops & Fundraiser Calls</span>
-                <p class="text-[12px] text-[var(--color-steel)]">New hoodies, bake-sale schedules, and volunteer requests.</p>
-              </div>
-            </label>
-          </div>
-
-          <div class="pt-4 border-t border-[var(--color-hairline-soft)]">
-            <Button variant="primary" class="w-full" size="sm">
-              Save Mailing Preferences
-            </Button>
-            <p class="text-[11px] text-[var(--color-stone)] text-center mt-2">
-              Unsubscribe anytime with one-click token link
-            </p>
-          </div>
-        </Card>
-      </div>
-    </div>
+    <!-- Interactive Announcements Scene Island -->
+    <AnnouncementsScene client:load />
   </div>
 </BaseLayout>

@@ -1,24 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Button from '../components/ui/Button.astro';
-import Card from '../components/ui/Card.astro';
 import Badge from '../components/ui/Badge.astro';
-
-const ledgerEntries = [
-  { id: 'LED-091', date: '10 Apr 2026', desc: 'Spring Gala Ticket (Online)', category: 'Tickets', method: 'Online Payment', type: 'in', amount: '₹350.00' },
-  { id: 'LED-090', date: '10 Apr 2026', desc: 'Membership Dues (VIP Tier)', category: 'Dues', method: 'Online Payment', type: 'in', amount: '₹600.00' },
-  { id: 'LED-089', date: '09 Apr 2026', desc: 'Bake Sale Cash Quad Table', category: 'Fundraiser', method: 'Staff Recorded Cash', type: 'in', amount: '₹1,200.00' },
-  { id: 'LED-088', date: '08 Apr 2026', desc: 'Heritage Hoodie (Medium)', category: 'Merchandise', method: 'Online Payment', type: 'in', amount: '₹899.00' },
-  { id: 'LED-087', date: '07 Apr 2026', desc: 'Canopy & Table Rental Reimbursement', category: 'Expense', method: 'Direct Bank Transfer', type: 'out', amount: '₹1,450.00' },
-  { id: 'LED-086', date: '05 Apr 2026', desc: 'Baking Supplies (Flour & Sugar)', category: 'Expense', method: 'Receipt Reimbursement', type: 'out', amount: '₹820.00' },
-];
+import TreasurerScene from '../components/scenes/TreasurerScene';
 ---
 
 <BaseLayout
   title="CampusOne — Treasury & Financial Overview"
-  description="Complete financial ledger for the Skyline Student Association. Transparent money in, money out, and balanced semester accounts."
+  description="Complete financial ledger for the Skyline Student Association. Transparent money in, money out, balanced semester accounts, and deterministic action queue."
 >
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-12">
     <!-- Header -->
     <div class="max-w-3xl">
       <Badge variant="neutral" class="mb-3">Financial Overview</Badge>
@@ -30,96 +20,7 @@ const ledgerEntries = [
       </p>
     </div>
 
-    <!-- 3 Big KPI Tiles (Money In, Money Out, Recorded Net Movement) -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      <Card variant="feature">
-        <span class="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">Money In (Total)</span>
-        <div class="text-3xl sm:text-4xl font-extrabold text-[var(--color-success)] mt-2">
-          +₹89,549.00
-        </div>
-        <p class="text-[12px] text-[var(--color-steel)] mt-2">
-          Dues, Gala Tickets, Merch, Bake Sale
-        </p>
-      </Card>
-
-      <Card variant="feature">
-        <span class="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">Money Out (Expenses)</span>
-        <div class="text-3xl sm:text-4xl font-extrabold text-[var(--color-critical)] mt-2">
-          -₹22,340.00
-        </div>
-        <p class="text-[12px] text-[var(--color-steel)] mt-2">
-          Reimbursed supplies, table rentals
-        </p>
-      </Card>
-
-      <Card variant="feature" class="border-2 border-[var(--color-ink-deep)]">
-        <div class="flex items-center justify-between">
-          <span class="text-[13px] font-bold text-[var(--color-ink-deep)] uppercase tracking-wider">Net Recorded Movement</span>
-          <Badge variant="success">Balanced</Badge>
-        </div>
-        <div class="text-3xl sm:text-4xl font-extrabold text-[var(--color-ink-deep)] mt-2">
-          ₹67,209.00
-        </div>
-        <p class="text-[12px] text-[var(--color-steel)] mt-2">
-          Recorded ledger balance · Zero missing cash
-        </p>
-      </Card>
-    </div>
-
-    <!-- Audited Ledger Entries Table -->
-    <Card variant="feature" class="space-y-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--color-hairline-soft)]">
-        <div>
-          <h3 class="text-2xl font-bold text-[var(--color-ink-deep)]">Audited Source Ledger</h3>
-          <p class="text-[13px] text-[var(--color-steel)]">Immutable records linking directly to checkouts and contributions</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <Button variant="pill-tab" active={true}>All Sources</Button>
-          <Button variant="pill-tab">Online Payments</Button>
-          <Button variant="pill-tab">Staff Cash</Button>
-        </div>
-      </div>
-
-      <!-- Ledger Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-[14px]">
-          <thead>
-            <tr class="border-b border-[var(--color-hairline-soft)] text-[var(--color-steel)] text-[12px] font-bold uppercase tracking-wider">
-              <th class="py-3 px-3">Entry ID</th>
-              <th class="py-3 px-3">Date</th>
-              <th class="py-3 px-3">Description</th>
-              <th class="py-3 px-3">Category</th>
-              <th class="py-3 px-3">Method</th>
-              <th class="py-3 px-3 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[var(--color-hairline-soft)]">
-            {
-              ledgerEntries.map((e) => (
-                <tr class="hover:bg-[var(--color-surface-soft)]/50 transition-colors">
-                  <td class="py-3.5 px-3 font-mono text-[12px] text-[var(--color-steel)]">{e.id}</td>
-                  <td class="py-3.5 px-3 text-[var(--color-slate)]">{e.date}</td>
-                  <td class="py-3.5 px-3 font-bold text-[var(--color-ink-deep)]">{e.desc}</td>
-                  <td class="py-3.5 px-3">
-                    <span class="px-2 py-0.5 rounded-full bg-[var(--color-surface-soft)] text-[var(--color-ink)] text-[11px] font-bold border border-[var(--color-hairline-soft)]">
-                      {e.category}
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-3 text-[var(--color-steel)] text-[13px]">{e.method}</td>
-                  <td class={`py-3.5 px-3 font-mono font-bold text-right ${e.type === 'in' ? 'text-[var(--color-success)]' : 'text-[var(--color-critical)]'}`}>
-                    {e.type === 'in' ? `+${e.amount}` : `-${e.amount}`}
-                  </td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pt-4 border-t border-[var(--color-hairline-soft)] flex items-center justify-between text-[12px] text-[var(--color-steel)]">
-        <span>Displaying latest 6 persisted entries</span>
-        <span class="font-bold text-[var(--color-ink-deep)]">Skyline Student Association Treasury</span>
-      </div>
-    </Card>
+    <!-- Interactive Treasurer Scene Island -->
+    <TreasurerScene client:load />
   </div>
 </BaseLayout>

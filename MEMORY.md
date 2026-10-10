@@ -49,9 +49,20 @@
   - Fixed GitHub Actions CI workflow (`.github/workflows/ci.yml`): eliminated invalid `node-modules-cache` parameter, specified Node.js 22 LTS, pinned `ubuntu-24.04` runner, and integrated automated test step (`pnpm test`).
   - Executed `supabase db push` against remote Supabase project `leifxoxnqnvezbmdtmcr` (CampusOne - Odoo X NMIT 2026), successfully applying migrations 1, 2, and 3 (`20261010000001_phase1_initial_schema.sql`, `20261010000002_phase1_rpcs.sql`, `20261010000003_phase1_seed_data.sql`). Verified via `supabase migration list`.
 
+- [x] **Phase 2: Cover All Six Scenes (End-to-End Persisted Flows):**
+  - **Scene 1 (Memberships & Signups):** Built `MembershipScene.tsx` with live tiers from database, self-service application submission, admin review board (Approve / Reject with reason), rejection reapply workflow with revision increment and history retention, dues payment, walk-up desk registration with cash/UPI ledger recording, and instant door-side member lookup by name/email/ID with minimal data exposure.
+  - **Scene 2 (Gala Events & Tickets):** Built `EventsScene.tsx` with live event capacity gauge, tiered member (15% discount) vs guest pricing, online checkout with cryptographic HMAC QR token issuance, door QR check-in terminal with atomic duplicate scan lock, cash door sales desk, post-event attendance & turnout summary, and admin event creation modal.
+  - **Scene 3 (Announcements & Communications):** Built `AnnouncementsScene.tsx` with web announcement feed, audience selection filters (All, Members, Volunteers, Public), in-app notice publisher, and mailing-list preference toggles with one-click unsubscribe.
+  - **Scene 4 (Club Hoodies & Merch):** Built `MerchScene.tsx` with size variant picker (S, M, L, XL), live inventory counts, active member discount (20% off), atomic inventory decrementing, and order tracking.
+  - **Scene 5 (Fundraiser Planning & Bake Sale):** Built `FundraiserScene.tsx` with live campaign financial progress vs goal (₹14,200 of ₹25,000), task completion progress (4 of 7), interactive volunteer task board with priority badges and status toggles (`todo` -> `in_progress` -> `done`), and audited quad cash collection form with automatic ledger posting.
+  - **Scene 6 (Treasurer Overview & Deterministic Action Queue):** Built `TreasurerScene.tsx` with 3 big KPI tiles (Money In, Money Out, Net Movement), source breakdown (dues, tickets, merch, bake sale, expenses), payment method breakdown (online, cash, manual UPI), audited immutable ledger table, and complete Deterministic Action Queue monitoring all 6 operational triggers (`membership_renewal`, `low_event_availability`, `overdue_task`, `low_stock`, `reimbursement_review`, `failed_announcement_delivery`) with next actions and resolution tracking.
+  - **Universal Role Switcher:** Implemented `RoleSwitcher.tsx` pill banner atop `BaseLayout.astro` enabling instant persona switching (`Admin`, `Treasurer`, `Door Staff`, `Volunteer`, `Active Member`, `Applicant`) for live judge demos.
+  - **Automated Verification:** Added `packages/contracts/src/phase2.test.ts` (11 comprehensive tests); all 20 tests pass in 414ms (`vitest run`). Verified `astro check` (0 errors, 0 warnings) and production static build (`astro build` -> 7 pages compiled in 2.30s).
+
 ## Key Design Rules & Conventions
 - **Cobalt Rule:** `#0064E0` is strictly reserved for buy-now / checkout flows (`Add to cart`, `Buy Tickets`, `Pay Dues`). Marketing and general CTAs use black pill buttons (`#000000`).
 - **Pill Shape Rule:** Buttons, badges, search bars, category tabs are ALWAYS `rounded-full` (100px). No square buttons.
 - **Card Rounding:** Feature cards use `rounded-3xl` (32px), utility/icon cards use `rounded-xl` (16px).
 - **Elevation:** Flat design baseline; subtle shadow only for sticky purchase rails and active tabs.
 - **Integrity Rule:** No fabricated numbers or mock totals; all stats link to real persisted records.
+

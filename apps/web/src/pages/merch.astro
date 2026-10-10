@@ -1,22 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Button from '../components/ui/Button.astro';
-import Card from '../components/ui/Card.astro';
 import Badge from '../components/ui/Badge.astro';
-
-const variants = [
-  { size: 'S', stock: 12, label: 'Small' },
-  { size: 'M', stock: 24, label: 'Medium' },
-  { size: 'L', stock: 8, label: 'Large (Low Stock)' },
-  { size: 'XL', stock: 0, label: 'XL (Sold Out)' },
-];
+import MerchScene from '../components/scenes/MerchScene';
 ---
 
 <BaseLayout
   title="CampusOne — Official Club Hoodies & Merch"
   description="Order official Skyline Student Association apparel. Size variants, member discounts, and live inventory."
 >
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-12">
     <!-- Header -->
     <div class="max-w-3xl">
       <Badge variant="neutral" class="mb-3">Official Club Merch</Badge>
@@ -28,94 +20,7 @@ const variants = [
       </p>
     </div>
 
-    <!-- Product Showcase (2-Column PDP Split: Gallery left + Sticky purchase rail right) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <!-- Left: Visual Product Card (7 Columns) -->
-      <div class="lg:col-span-7 space-y-6">
-        <Card variant="feature" class="space-y-6">
-          <div class="aspect-video w-full rounded-2xl bg-[var(--color-surface-soft)] flex items-center justify-center border border-[var(--color-hairline-soft)] relative overflow-hidden">
-            <!-- Simulated Apparel Illustration -->
-            <div class="text-center p-8">
-              <span class="w-24 h-24 mx-auto rounded-full bg-[var(--color-ink-deep)] text-white flex items-center justify-center font-extrabold text-3xl mb-4 shadow-sm">
-                C1
-              </span>
-              <p class="font-bold text-xl text-[var(--color-ink-deep)]">Skyline Heritage Pullover Hoodie</p>
-              <p class="text-[13px] text-[var(--color-steel)]">Midnight Navy · 380 GSM Heavyweight Fleece</p>
-            </div>
-            <div class="absolute top-4 left-4">
-              <Badge variant="promo-yellow">Official 2026 Drop</Badge>
-            </div>
-          </div>
-
-          <!-- Description -->
-          <div class="space-y-3">
-            <h3 class="text-2xl font-bold text-[var(--color-ink-deep)]">Product Details</h3>
-            <p class="text-[15px] text-[var(--color-ink)] leading-relaxed tracking-[-0.16px]">
-              Custom tailored for the Skyline Student Association. Features high-density embroidered crest on the chest, kangaroo front pouch, ribbed cuffs, and dual-lined drawstrings.
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      <!-- Right: Sticky Purchase Rail (5 Columns) (card-checkout-summary) -->
-      <div class="lg:col-span-5 sticky top-24">
-        <Card variant="checkout" class="space-y-6">
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">SKU: SKY-HD-01</span>
-              <Badge variant="success">In Stock (44 total)</Badge>
-            </div>
-            <h2 class="text-2xl font-bold text-[var(--color-ink-deep)]">Heritage Hoodie</h2>
-            
-            <div class="mt-4 flex items-baseline gap-3">
-              <span class="text-4xl font-extrabold text-[var(--color-ink-deep)]">₹899</span>
-              <span class="text-lg line-through text-[var(--color-stone)]">₹1,120</span>
-              <Badge variant="promo-yellow">20% Member Off</Badge>
-            </div>
-          </div>
-
-          <!-- Size Variant Picker Pills -->
-          <div class="space-y-3 pt-4 border-t border-[var(--color-hairline-soft)]">
-            <label class="text-[14px] font-bold text-[var(--color-ink-deep)] block">
-              Select Size Variant:
-            </label>
-            <div class="grid grid-cols-4 gap-2">
-              {
-                variants.map((v, i) => (
-                  <button
-                    type="button"
-                    disabled={v.stock === 0}
-                    class={`py-3 rounded-xl border text-[14px] font-bold transition-all text-center ${
-                      i === 1
-                        ? 'border-2 border-[var(--color-ink-deep)] bg-[var(--color-canvas)] text-[var(--color-ink-deep)]'
-                        : v.stock === 0
-                        ? 'border-[var(--color-hairline-soft)] bg-[var(--color-surface-soft)] text-[var(--color-stone)] line-through cursor-not-allowed opacity-60'
-                        : 'border-[var(--color-hairline)] bg-[var(--color-canvas)] hover:border-[var(--color-ink-deep)] text-[var(--color-ink)]'
-                    }`}
-                  >
-                    <div>{v.size}</div>
-                    <div class="text-[10px] font-normal text-[var(--color-steel)] mt-0.5">
-                      {v.stock === 0 ? 'Out' : `${v.stock} left`}
-                    </div>
-                  </button>
-                ))
-              }
-            </div>
-          </div>
-
-          <!-- Live Stock Note -->
-          <div class="p-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] text-[12px] text-[var(--color-steel)]">
-            <strong class="text-[var(--color-ink)]">Live Stock:</strong> Sizes are reserved in real-time as you complete order checkout.
-          </div>
-
-          <!-- Checkout Action -->
-          <div class="pt-2">
-            <Button variant="buy-cta" class="w-full">
-              Add to Cart · ₹899
-            </Button>
-          </div>
-        </Card>
-      </div>
-    </div>
+    <!-- Interactive Merch Scene Island -->
+    <MerchScene client:load />
   </div>
 </BaseLayout>

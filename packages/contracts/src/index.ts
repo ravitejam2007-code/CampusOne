@@ -490,3 +490,36 @@ export interface TreasurerOverviewResult {
     other: number;
   };
 }
+
+export interface EventSummaryResult {
+  event_id: string;
+  title: string;
+  capacity: number;
+  sold_count: number;
+  reserved_capacity: number;
+  checked_in_count: number;
+  online_revenue_paise: number;
+  cash_revenue_paise: number;
+  total_revenue_paise: number;
+}
+
+export interface MemberLookupResult {
+  id: string;
+  full_name: string;
+  email: string;
+  student_id: string;
+  tier_name: string;
+  status: 'active' | 'expired' | 'pending';
+  expires_at: string;
+  ticket_discount_percent: number;
+  merch_discount_percent: number;
+}
+
+export interface WalkUpSignupParams {
+  full_name: string;
+  email: string;
+  student_id: string;
+  tier_id: string;
+  payment_method: 'cash' | 'manual_upi';
+  notes?: string;
+}

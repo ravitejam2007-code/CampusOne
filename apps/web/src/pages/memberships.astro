@@ -1,16 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Button from '../components/ui/Button.astro';
-import Card from '../components/ui/Card.astro';
 import Badge from '../components/ui/Badge.astro';
-import Input from '../components/ui/Input.astro';
+import MembershipScene from '../components/scenes/MembershipScene';
 ---
 
 <BaseLayout
   title="CampusOne — Memberships & Signups"
-  description="Join the Skyline Student Association. Explore annual tiers, member benefits, and discounts."
+  description="Join the Skyline Student Association. Explore annual tiers, member benefits, discounts, and walk-up verification."
 >
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-12">
     <!-- Header -->
     <div class="max-w-3xl">
       <Badge variant="neutral" class="mb-3">Official Membership Tiers</Badge>
@@ -22,145 +20,7 @@ import Input from '../components/ui/Input.astro';
       </p>
     </div>
 
-    <!-- Tiers Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- General Member Tier -->
-      <Card variant="feature" class="flex flex-col justify-between relative">
-        <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <span class="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">Annual Tier</span>
-            <Badge variant="neutral">Standard</Badge>
-          </div>
-          <div>
-            <h3 class="text-3xl font-bold text-[var(--color-ink-deep)] mb-1">General Member</h3>
-            <p class="text-[14px] text-[var(--color-steel)]">Access to all standard club activities and voting rights.</p>
-          </div>
-          <div class="text-4xl font-extrabold text-[var(--color-ink-deep)]">
-            ₹300 <span class="text-[16px] text-[var(--color-steel)] font-normal">/ academic year</span>
-          </div>
-
-          <ul class="space-y-3 text-[14px] text-[var(--color-ink)] border-t border-[var(--color-hairline-soft)] pt-6">
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span>15% discount on Spring Gala tickets</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span>10% discount on club hoodies & merch</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span>Audience access to internal announcement feed</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span>Automated 30-day & 7-day renewal reminder</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="pt-8 mt-6 border-t border-[var(--color-hairline-soft)]">
-          <Button variant="buy-cta" class="w-full">
-            Pay Dues (₹300)
-          </Button>
-        </div>
-      </Card>
-
-      <!-- VIP Member Tier -->
-      <Card variant="feature" class="flex flex-col justify-between border-2 border-[var(--color-ink-deep)] relative">
-        <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <span class="text-[13px] font-bold text-[var(--color-primary)] uppercase tracking-wider">Premium Access</span>
-            <Badge variant="promo-yellow">Recommended</Badge>
-          </div>
-          <div>
-            <h3 class="text-3xl font-bold text-[var(--color-ink-deep)] mb-1">VIP Member</h3>
-            <p class="text-[14px] text-[var(--color-steel)]">Priority privileges, special gala seating, and higher discounts.</p>
-          </div>
-          <div class="text-4xl font-extrabold text-[var(--color-ink-deep)]">
-            ₹600 <span class="text-[16px] text-[var(--color-steel)] font-normal">/ academic year</span>
-          </div>
-
-          <ul class="space-y-3 text-[14px] text-[var(--color-ink)] border-t border-[var(--color-hairline-soft)] pt-6">
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span><strong>30% discount</strong> on Spring Gala tickets</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span><strong>20% discount</strong> on club hoodies & merch</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span>Front-row gala reservations & VIP lanyard</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-[var(--color-success)] font-bold">✓</span>
-              <span>Priority RSVP for club workshops & bakes</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="pt-8 mt-6 border-t border-[var(--color-hairline-soft)]">
-          <Button variant="buy-cta" class="w-full">
-            Pay VIP Dues (₹600)
-          </Button>
-        </div>
-      </Card>
-    </div>
-
-    <!-- Walk-up Signup & Door Lookup Preview -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Walk-up Application Form -->
-      <Card variant="feature" class="space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-[var(--color-hairline-soft)]">
-          <div>
-            <h3 class="text-xl font-bold text-[var(--color-ink-deep)]">Walk-up Campus Registration</h3>
-            <p class="text-[13px] text-[var(--color-steel)]">Assigned desk staff registers a student walk-up</p>
-          </div>
-          <Badge variant="neutral">Staff desk</Badge>
-        </div>
-
-        <form class="space-y-4" onsubmit="return false;">
-          <Input label="Student Full Name" placeholder="e.g. Priya Nair" required={true} />
-          <Input label="Student Email" type="email" placeholder="p.nair@skyline.edu" required={true} />
-          <Input label="Student ID Number" placeholder="SKY-2026-4091" required={true} />
-          
-          <div class="pt-2">
-            <Button variant="primary" type="submit" class="w-full">
-              Record Walk-up Application
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      <!-- Door-side Member Verification Card -->
-      <Card variant="feature" class="space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-[var(--color-hairline-soft)]">
-          <div>
-            <h3 class="text-xl font-bold text-[var(--color-ink-deep)]">Door-Side Member Lookup</h3>
-            <p class="text-[13px] text-[var(--color-steel)]">Verify membership in seconds if QR or Wi-Fi is shaky</p>
-          </div>
-          <Badge variant="success">Door staff</Badge>
-        </div>
-
-        <div class="space-y-4">
-          <Input label="Search Member by Name or Email" placeholder="Type name or student ID..." />
-          
-          <!-- Mock Result Card -->
-          <div class="p-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)] space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-[15px] text-[var(--color-ink-deep)]">Priya Nair</span>
-              <Badge variant="success">Active Member</Badge>
-            </div>
-            <p class="text-[13px] text-[var(--color-steel)]">SKY-2026-4091 · VIP Tier</p>
-            <div class="text-[12px] text-[var(--color-slate)] pt-1 flex justify-between">
-              <span>Expires: 31 May 2027</span>
-              <span class="text-[var(--color-success)] font-bold">Eligible for 30% Gala Discount</span>
-            </div>
-          </div>
-        </div>
-      </Card>
-    </div>
+    <!-- Interactive Membership Scene Island -->
+    <MembershipScene client:load />
   </div>
 </BaseLayout>
