@@ -12,7 +12,10 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/react": "^4.2.1",
+    "@campusone/contracts": "workspace:*",
     "@fontsource/montserrat": "^5.1.1",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
     "@tailwindcss/vite": "^4.0.9",
     "astro": "^5.4.1",
     "clsx": "^2.1.1",

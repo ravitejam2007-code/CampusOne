@@ -29,6 +29,25 @@
   - Created `AGENTS.md` with guidelines and skill installation recipes.
   - Validated with 0 errors via `astro check` and `astro build` (7 production scene pages built).
 
+- [x] **Phase 1: Shared Foundation & Money Model:**
+  - Configured Supabase MCP server (`https://mcp.supabase.com/mcp?project_ref=leifxoxnqnvezbmdtmcr...`) in `~/.gemini/antigravity/mcp_config.json`, `~/.gemini/antigravity-ide/mcp_config.json`, and `~/.gemini/config/mcp_config.json`.
+  - Installed official Supabase agent skills (`supabase`, `supabase-postgres-best-practices`).
+  - Created initial database migration `supabase/migrations/20261010000001_phase1_initial_schema.sql` spanning 29 P0 tables with UUID primary keys, check constraints, foreign keys, performance indexes, and strict Row Level Security (RLS) policies.
+  - Implemented transactional PostgreSQL RPCs in `supabase/migrations/20261010000002_phase1_rpcs.sql`:
+    * `create_checkout`: Atomic capacity/stock reservation, server-authoritative discount calculation, idempotency.
+    * `fulfill_checkout`: Idempotent fulfilment, ticket issuance with deterministic QR HMAC, stock finalization, membership activation, source-linked immutable ledger posting.
+    * `record_staff_payment`: Audited staff recording for cash and manual UPI payments.
+    * `record_cash_contribution`: Audited bake sale cash income recording and real-time fundraiser total update.
+    * `check_in_ticket`: Atomic door check-in with duplicate scan prevention.
+    * `get_treasurer_overview`: Financial balance and breakdown aggregation from ledger entries.
+    * `refresh_action_queue`: Deterministic evaluation of operational rules (renewals, capacity, tasks, stock).
+  - Seeded canonical demo records in `supabase/migrations/20261010000003_phase1_seed_data.sql` for "CampusOne Demo Club", membership tiers, Spring Gala 2026, merchandise variants, announcements, fundraiser, and action queue rules.
+  - Built `@campusone/contracts` package in monorepo (`packages/contracts`) with shared TypeScript types and RPC contracts.
+  - Created client and SSR integration layer in `apps/web/src/lib/` (`supabase.ts`, `auth.ts`, `api.ts`, `formatters.ts`).
+  - Implemented and verified automated test suite in `packages/contracts/src/phase1.test.ts` with 9 passing tests covering role-permission matrix, discount arithmetic, capacity limits, and ledger balancing.
+  - Confirmed 0 errors on production Astro build (`astro build` -> 7 scene routes generated).
+  - Fixed GitHub Actions CI workflow (`.github/workflows/ci.yml`): eliminated invalid `node-modules-cache` parameter, specified Node.js 22 LTS, pinned `ubuntu-24.04` runner, and integrated automated test step (`pnpm test`).
+
 ## Key Design Rules & Conventions
 - **Cobalt Rule:** `#0064E0` is strictly reserved for buy-now / checkout flows (`Add to cart`, `Buy Tickets`, `Pay Dues`). Marketing and general CTAs use black pill buttons (`#000000`).
 - **Pill Shape Rule:** Buttons, badges, search bars, category tabs are ALWAYS `rounded-full` (100px). No square buttons.

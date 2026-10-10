@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-modules-cache: true
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -30,6 +30,9 @@ jobs:
 
       - name: Approve dependencies build scripts
         run: pnpm approve-builds --all
+
+      - name: Run unit & permission tests
+        run: pnpm test
 
       - name: Type check
         run: pnpm check
