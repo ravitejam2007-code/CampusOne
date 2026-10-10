@@ -1,7 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
+import { existsSync } from 'node:fs';
 
-const SUPABASE_URL = 'https://leifxoxnqnvezbmdtmcr.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlaWZ4b3hucW52ZXpibWR0bWNyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTYwNzQ0MCwiZXhwIjoyMTA3MTgzNDQwfQ.9hyXjDcH3odr8Iy8-W3zyQoU3Lzo20X9zgCjX8ruo-Y';
+// Load .env file natively
+if (existsSync('.env')) {
+  process.loadEnvFile('.env');
+} else if (existsSync('../../.env')) {
+  process.loadEnvFile('../../.env');
+}
+
+const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error('CRITICAL: PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be defined in .env');
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },

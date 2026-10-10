@@ -40,7 +40,13 @@ serve(async (req: Request) => {
             );
         }
 
-        const secret = Deno.env.get('RAZORPAY_KEY_SECRET') || 'demo_secret_key';
+        const secret = Deno.env.get('RAZORPAY_KEY_SECRET');
+        if (!secret) {
+            return new Response(
+                JSON.stringify({ error: { code: 'SERVER_ERROR', message: 'RAZORPAY_KEY_SECRET must be configured in environment' } }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
 
         // Verify HMAC-SHA256 signature
         const isValid = await verifyRazorpaySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, secret);

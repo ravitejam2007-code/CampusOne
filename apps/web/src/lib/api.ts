@@ -1401,7 +1401,7 @@ export const api = {
       razorpay_order_id: `order_test_${Date.now()}`,
       amount: 25000,
       currency: 'INR',
-      key_id: 'rzp_test_TXWbmmg3SRSwlV',
+      key_id: import.meta.env.PUBLIC_RAZORPAY_KEY_ID || '',
     };
   },
 

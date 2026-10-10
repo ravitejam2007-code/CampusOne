@@ -88,6 +88,7 @@
     * Built `/signup` ([signup.astro](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/pages/signup.astro)) with [SignUpScene.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/SignUpScene.tsx) for walk-up / new student self-registration.
     * Synchronized [RoleSwitcher.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/RoleSwitcher.tsx) and [RoleContext.tsx](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/scenes/RoleContext.tsx) to acquire real Supabase Auth JWTs upon role switching.
     * Updated [Navbar.astro](file:///C:/Users/javal/Videos/CampusOne/apps/web/src/components/layout/Navbar.astro) with Sign In and Role Switch controls.
+  - **Zero Hardcoded Secrets Guarantee:** Stripped all hardcoded project URLs, tokens, and fallback keys across `supabase.ts`, `api.ts`, `seed-auth-users.mjs`, and Edge Functions (`create-payment-order`, `verify-payment`, `razorpay-webhook`). All values are loaded strictly from `.env` and environment variables with explicit fail-fast validations.
   - **Automated Tests:** Added `packages/contracts/src/auth.test.ts`. Full test suite now passes with **31 tests across 4 test suites**.
   - **Production Build:** Verified with `astro build` — 9 production routes compiled with 0 errors.
 

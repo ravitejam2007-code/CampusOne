@@ -33,7 +33,13 @@ serve(async (req: Request) => {
         const rawBody = await req.text();
         const signature = req.headers.get('X-Razorpay-Signature') || req.headers.get('x-razorpay-signature') || '';
 
-        const webhookSecret = Deno.env.get('RAZORPAY_WEBHOOK_SECRET') || Deno.env.get('RAZORPAY_KEY_SECRET') || 'demo_secret_key';
+        const webhookSecret = Deno.env.get('RAZORPAY_WEBHOOK_SECRET') || Deno.env.get('RAZORPAY_KEY_SECRET');
+        if (!webhookSecret) {
+            return new Response(
+                JSON.stringify({ error: { code: 'SERVER_ERROR', message: 'RAZORPAY_WEBHOOK_SECRET must be configured in environment' } }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
 
         // Verify HMAC SHA256 over raw body
         const isValid = await verifyWebhookSignature(rawBody, signature, webhookSecret);

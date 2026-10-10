@@ -39,9 +39,16 @@ serve(async (req: Request) => {
             );
         }
 
-        // Return existing razorpay order if created previously
-        const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID') || 'rzp_test_TXWbmmg3SRSwlV';
-        const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET') || 'demo_secret_key';
+        // Retrieve Razorpay keys strictly from environment
+        const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
+        const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+
+        if (!razorpayKeyId || !razorpayKeySecret) {
+            return new Response(
+                JSON.stringify({ error: 'RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be configured in environment' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
 
         let orderId = checkout.razorpay_order_id;
 
