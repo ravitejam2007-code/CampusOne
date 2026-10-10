@@ -124,6 +124,21 @@
     * Implemented `generateAllInOnePass(userId?: string)` and `verifyAllInOnePass(passToken: string)` in `apps/web/src/lib/api.ts` with Edge Function caller and direct RPC fallback.
     * Compiled all 9 production Astro routes with 0 errors (`pnpm --filter web build`).
     * Zero hardcoded secrets maintained; all environment variables loaded strictly via `.env`.
+  - **Frontend API Reference & Integration Instructions:**
+    * **SDK Method 1 (Recommended):** `import { api } from '@/lib/api'; const pass = await api.generateAllInOnePass();` returns `{ status: 'success', pass_token, qr_data_url, qr_svg, payload: { student, membership, upcoming_events } }`.
+    * **SDK Method 2 (Door Verification):** `const verify = await api.verifyAllInOnePass(token);` returns `{ status: 'success', verified: true, data: { valid: true, student, membership, upcoming_events } }`.
+    * **Direct Edge Function Endpoint 1 (Pass & QR Generation):**
+      - `POST https://leifxoxnqnvezbmdtmcr.supabase.co/functions/v1/generate-all-in-one-pass`
+      - Headers: `Authorization: Bearer <USER_JWT>`, `apikey: <PUBLIC_SUPABASE_ANON_KEY>`, `Content-Type: application/json`
+      - Body: `{ "user_id": "<uuid>" }` (optional, defaults to `auth.uid()`)
+    * **Direct Edge Function Endpoint 2 (Door Scan Verification):**
+      - `POST https://leifxoxnqnvezbmdtmcr.supabase.co/functions/v1/generate-all-in-one-pass/verify`
+      - Headers: `Authorization: Bearer <DOOR_STAFF_JWT>`, `apikey: <PUBLIC_SUPABASE_ANON_KEY>`, `Content-Type: application/json`
+      - Body: `{ "pass_token": "SKYPASS:v1:<uid>:<sig>" }`
+    * **Frontend UI Implementation Recipe:**
+      - Bind `<img src={pass.qr_data_url} alt="Student QR Pass" />` or inject `<div dangerouslySetInnerHTML={{ __html: pass.qr_svg }} />`.
+      - Display badges for membership status (`pass.payload.membership.tier_name`) and discounts.
+      - Map upcoming events from `pass.payload.upcoming_events` into event admission chips.
 
 ## Key Design Rules & Conventions
 

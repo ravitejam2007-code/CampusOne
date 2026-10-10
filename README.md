@@ -241,6 +241,125 @@ The pass consolidates complete student credentials into a single deterministic o
   - `qr_code_png`: Base64 `data:image/png;base64,...` Data URI for universal image compatibility.
 - **Door Verification Endpoint:** Exposes `POST /verify` allowing handheld scanners and door staff tablets to validate passes in under 200ms.
 
+### 4. Frontend API Reference & Integration Guide
+
+Frontend components can request and render the All-in-One Pass via the TypeScript API SDK or direct HTTP fetch:
+
+#### Option A: TypeScript Client SDK (`apps/web/src/lib/api.ts`)
+
+```typescript
+import { api } from '@/lib/api';
+
+// 1. Generate All-in-One Pass for current authenticated student:
+const passResult = await api.generateAllInOnePass();
+
+if (passResult.status === 'success') {
+  // Direct Base64 PNG image for rendering:
+  const qrImageSrc = passResult.qr_data_url; 
+  // e.g. <img src={qrImageSrc} alt="Student Digital Pass" className="w-64 h-64 rounded-2xl" />
+
+  // Membership & Subscription info:
+  const { is_member, tier_name, expires_at, ticket_discount_percent } = passResult.payload.membership;
+
+  // Upcoming registered events attending:
+  const events = passResult.payload.upcoming_events;
+}
+
+// 2. Door Operations: Scan & Verify Pass:
+const scanResult = await api.verifyAllInOnePass("SKYPASS:v1:user-uuid:signature-hex");
+if (scanResult.verified) {
+  console.log(`Verified Entry: ${scanResult.data.student.full_name} (${scanResult.data.membership.tier_name})`);
+}
+```
+
+#### Option B: Direct HTTP Fetch to Supabase Edge Function
+
+##### 1. Generate Student Pass & QR Code
+- **Method & URL:** `POST https://<project-ref>.supabase.co/functions/v1/generate-all-in-one-pass`
+- **Headers:**
+  ```http
+  Authorization: Bearer <USER_SESSION_JWT_OR_ANON_KEY>
+  apikey: <PUBLIC_SUPABASE_ANON_KEY>
+  Content-Type: application/json
+  ```
+- **Request Body (Optional):**
+  ```json
+  {
+    "user_id": "e4a77df3-6c8f-4d64-9b88-ec94541ff91b"
+  }
+  ```
+  *(Omit `user_id` when authenticated to generate automatically for the current logged-in user).*
+- **Response (200 OK):**
+  ```json
+  {
+    "status": "success",
+    "pass_token": "SKYPASS:v1:e4a77df3-6c8f-4d64-9b88-ec94541ff91b:89abf803c46a6f194cb022e1858ad91e0a29587c6792451f28b26e088713d3cb",
+    "qr_data_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIE...",
+    "qr_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\">...</svg>",
+    "payload": {
+      "pass_token": "SKYPASS:v1:...",
+      "student": {
+        "user_id": "e4a77df3-6c8f-4d64-9b88-ec94541ff91b",
+        "full_name": "Rahul Sharma",
+        "email": "member@skyline.edu",
+        "student_id": "SKY-2026-1042"
+      },
+      "membership": {
+        "is_member": true,
+        "status": "active",
+        "tier_name": "General Student Member",
+        "expires_at": "2027-10-10T10:08:49.000Z",
+        "days_remaining": 365,
+        "ticket_discount_percent": 15,
+        "merch_discount_percent": 10
+      },
+      "upcoming_events": [
+        {
+          "ticket_id": "90cfbc35-21d3-4061-8b9a-f4efb7e47cfd",
+          "event_id": "f5e9754f-124b-449e-b8d4-f6738c823ea9",
+          "event_title": "Skyline Spring Gala 2026",
+          "venue": "Grand Hall & Courtyard, Campus Center",
+          "starts_at": "2026-10-24T18:00:00.000Z",
+          "ticket_type_name": "General Admission Ticket",
+          "status": "issued",
+          "qr_token": "TICKET-..."
+        }
+      ],
+      "signature": "89abf803c46a6f194cb022e1858ad91e0a29587c6792451f28b26e088713d3cb"
+    }
+  }
+  ```
+
+##### 2. Verify Pass Token (Door Scanner)
+- **Method & URL:** `POST https://<project-ref>.supabase.co/functions/v1/generate-all-in-one-pass/verify`
+- **Headers:**
+  ```http
+  Authorization: Bearer <DOOR_STAFF_JWT_OR_ANON_KEY>
+  apikey: <PUBLIC_SUPABASE_ANON_KEY>
+  Content-Type: application/json
+  ```
+- **Request Body:**
+  ```json
+  {
+    "pass_token": "SKYPASS:v1:e4a77df3-6c8f-4d64-9b88-ec94541ff91b:89abf803c46a6f194cb022e1858ad91e0a29587c6792451f28b26e088713d3cb"
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+    "status": "success",
+    "verified": true,
+    "data": {
+      "valid": true,
+      "pass_token": "SKYPASS:v1:...",
+      "verified_at": "2026-10-10T16:10:00.000Z",
+      "student": { "full_name": "Rahul Sharma", "student_id": "SKY-2026-1042" },
+      "membership": { "is_member": true, "tier_name": "General Student Member" },
+      "upcoming_events": [ ... ]
+    }
+  }
+  ```
+
 ---
 
 ## Design System & UI Art Direction
