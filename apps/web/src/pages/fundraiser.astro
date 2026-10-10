@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import Badge from '../components/ui/Badge.astro';
+import Input from '../components/ui/Input.astro';
+
+const tasks = [
+  { id: 1, title: 'Buy flour, sugar, and cupcake boxes', assignee: 'Karan M.', status: 'Done', badgeVariant: 'success' as const },
+  { id: 2, title: 'Bake 120 chocolate chip cookies', assignee: 'Meera S.', status: 'Done', badgeVariant: 'success' as const },
+  { id: 3, title: 'Bake 60 red velvet cupcakes', assignee: 'Rohan D.', status: 'In Progress', badgeVariant: 'attention' as const },
+  { id: 4, title: 'Reserve campus quad tables & canopy', assignee: 'Volunteer Lead', status: 'Done', badgeVariant: 'success' as const },
+  { id: 5, title: 'Manage Morning Shift (10 AM - 1 PM)', assignee: 'Ananya P.', status: 'In Progress', badgeVariant: 'attention' as const },
+  { id: 6, title: 'Manage Afternoon Shift (1 PM - 4 PM)', assignee: 'Unassigned', status: 'Todo', badgeVariant: 'critical' as const },
+  { id: 7, title: 'Deposit collected cash into club ledger', assignee: 'Treasurer', status: 'Todo', badgeVariant: 'neutral' as const },
+];
+---
+
+<BaseLayout
+  title="CampusOne — Bake Sale Fundraiser (Scene 5)"
+  description="Scene 5: Planning a fundraiser. Volunteer task board, progress tracking, and audited cash bake-sale income."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+    <!-- Header -->
+    <div class="max-w-3xl">
+      <Badge variant="neutral" class="mb-3">Scene 5 · Skyline Student Association</Badge>
+      <h1 class="text-4xl md:text-5xl font-medium text-[var(--color-ink-deep)] tracking-tight mb-4">
+        Planning a bake sale fundraiser.
+      </h1>
+      <p class="text-lg text-[var(--color-steel)] font-light leading-relaxed">
+        See at a glance what still needs to be done, who is doing it, and whether the fundraiser is on track. Record real-time cash income directly into the club ledger.
+      </p>
+    </div>
+
+    <!-- Fundraiser Progress Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Financial Progress -->
+      <Card variant="feature" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">Fundraising Goal</span>
+          <Badge variant="success">Active Campaign</Badge>
+        </div>
+        <h3 class="text-2xl font-bold text-[var(--color-ink-deep)]">Spring Semester Bake Sale</h3>
+        <div class="text-3xl font-extrabold text-[var(--color-ink-deep)]">
+          ₹14,200 <span class="text-[16px] text-[var(--color-steel)] font-normal">raised of ₹25,000 goal</span>
+        </div>
+        <div class="w-full bg-[var(--color-hairline)] h-3 rounded-full overflow-hidden">
+          <div class="bg-[var(--color-success)] h-full rounded-full" style="width: 56.8%;"></div>
+        </div>
+        <p class="text-[12px] text-[var(--color-steel)]">
+          56.8% of goal achieved · Backed by 18 audited bake-sale cash entries
+        </p>
+      </Card>
+
+      <!-- Task Progress -->
+      <Card variant="feature" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-[13px] font-bold text-[var(--color-steel)] uppercase tracking-wider">Task Status</span>
+          <Badge variant="attention">3 Pending</Badge>
+        </div>
+        <h3 class="text-2xl font-bold text-[var(--color-ink-deep)]">Volunteer Operations</h3>
+        <div class="text-3xl font-extrabold text-[var(--color-ink-deep)]">
+          4 Done <span class="text-[16px] text-[var(--color-steel)] font-normal">out of 7 total tasks</span>
+        </div>
+        <div class="w-full bg-[var(--color-hairline)] h-3 rounded-full overflow-hidden">
+          <div class="bg-[var(--color-ink-deep)] h-full rounded-full" style="width: 57.1%;"></div>
+        </div>
+        <p class="text-[12px] text-[var(--color-steel)]">
+          Real volunteer assignments prevent items slipping through cracks
+        </p>
+      </Card>
+    </div>
+
+    <!-- Task Board & Cash Recording -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Volunteer Task Board (2 Columns) -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-[var(--color-hairline-soft)]">
+          <h3 class="text-xl font-bold text-[var(--color-ink-deep)]">Bake Sale Task Board</h3>
+          <span class="text-[13px] text-[var(--color-steel)]">Assigned volunteer team</span>
+        </div>
+
+        <div class="space-y-3">
+          {
+            tasks.map((t) => (
+              <div class="p-4 rounded-xl border border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] flex items-center justify-between gap-4">
+                <div class="space-y-1">
+                  <h4 class="font-bold text-[15px] text-[var(--color-ink-deep)]">{t.title}</h4>
+                  <p class="text-[12px] text-[var(--color-steel)]">Assignee: {t.assignee}</p>
+                </div>
+                <Badge variant={t.badgeVariant}>{t.status}</Badge>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Record Cash Bake Sale Entry (1 Column) -->
+      <div class="space-y-6">
+        <Card variant="feature" class="space-y-4">
+          <div class="border-b border-[var(--color-hairline-soft)] pb-3">
+            <h3 class="font-bold text-[18px] text-[var(--color-ink-deep)]">Record Cash Income</h3>
+            <p class="text-[12px] text-[var(--color-steel)]">Bake sale quad table cash collection</p>
+          </div>
+
+          <form class="space-y-3.5" onsubmit="return false;">
+            <Input label="Amount Collected (₹)" type="number" placeholder="e.g. 1200" required={true} />
+            <Input label="Source / Description" placeholder="Quad table afternoon cookie sales" required={true} />
+            <Input label="Volunteer Actor" value="Ananya P. (Staff Desk)" disabled={true} />
+
+            <div class="pt-2">
+              <Button variant="primary" type="submit" size="sm" class="w-full">
+                Post Cash Entry to Ledger
+              </Button>
+            </div>
+            <p class="text-[11px] text-[var(--color-stone)] text-center">
+              Requires staff role. Creates audited ledger record.
+            </p>
+          </form>
+        </Card>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

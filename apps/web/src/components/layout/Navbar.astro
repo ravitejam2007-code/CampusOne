@@ -1,0 +1,121 @@
+---
+import Button from '../ui/Button.astro';
+import SearchPill from '../ui/SearchPill.astro';
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = Astro.url.pathname } = Astro.props;
+
+const navItems = [
+  { label: 'Events', href: '/events' },
+  { label: 'Memberships', href: '/memberships' },
+  { label: 'Merch', href: '/merch' },
+  { label: 'Fundraiser', href: '/fundraiser' },
+  { label: 'Announcements', href: '/announcements' },
+  { label: 'Treasurer', href: '/treasurer' },
+];
+---
+
+<header class="sticky top-0 z-50 w-full bg-[var(--color-canvas)] border-b border-[var(--color-hairline-soft)]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[64px] flex items-center justify-between gap-4">
+    <!-- Brand Wordmark -->
+    <div class="flex items-center gap-3 shrink-0">
+      <a href="/" class="flex items-center gap-2 group">
+        <span class="w-8 h-8 rounded-full bg-[var(--color-ink-deep)] text-white flex items-center justify-center font-extrabold text-[16px] tracking-tight group-hover:scale-105 transition-transform">
+          C1
+        </span>
+        <span class="font-extrabold text-[20px] tracking-[-0.3px] text-[var(--color-ink-deep)]">
+          CampusOne
+        </span>
+      </a>
+      <span class="hidden lg:inline-block text-[11px] font-bold text-[var(--color-steel)] bg-[var(--color-surface-soft)] px-2 py-0.5 rounded-full border border-[var(--color-hairline-soft)]">
+        Skyline Club
+      </span>
+    </div>
+
+    <!-- Center Navigation Pill Tabs (Desktop) -->
+    <nav class="hidden md:flex items-center gap-1.5 overflow-x-auto py-1">
+      {
+        navItems.map((item) => {
+          const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+          return (
+            <a
+              href={item.href}
+              class={`px-3.5 py-1.5 rounded-full text-[14px] font-bold tracking-[-0.14px] transition-colors whitespace-nowrap ${
+                isActive
+                  ? 'bg-[var(--color-ink-deep)] text-white'
+                  : 'bg-[var(--color-canvas)] text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)]'
+              }`}
+            >
+              {item.label}
+            </a>
+          );
+        })
+      }
+    </nav>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <div class="hidden xl:block">
+        <SearchPill />
+      </div>
+
+      <!-- Quick Action CTA -->
+      <Button variant="primary" size="sm" href="/memberships">
+        Join Club
+      </Button>
+
+      <!-- Mobile Menu Toggle Button -->
+      <button
+        id="mobile-menu-btn"
+        type="button"
+        class="md:hidden p-2 rounded-full text-[var(--color-ink-deep)] hover:bg-[var(--color-surface-soft)] transition-colors"
+        aria-label="Toggle navigation menu"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Drawer -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] px-4 pt-3 pb-6">
+    <div class="mb-4">
+      <SearchPill class="max-w-full w-full" />
+    </div>
+    <div class="flex flex-col gap-2">
+      {
+        navItems.map((item) => {
+          const isActive = currentPath === item.href;
+          return (
+            <a
+              href={item.href}
+              class={`px-4 py-2.5 rounded-full text-[14px] font-bold ${
+                isActive
+                  ? 'bg-[var(--color-ink-deep)] text-white'
+                  : 'text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)]'
+              }`}
+            >
+              {item.label}
+            </a>
+          );
+        })
+      }
+    </div>
+  </div>
+</header>
+
+<script>
+  // Clean vanilla JS for mobile menu toggle without React hydration overhead
+  const toggleBtn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+
+  if (toggleBtn && menu) {
+    toggleBtn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  }
+</script>

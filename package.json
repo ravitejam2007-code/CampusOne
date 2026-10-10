@@ -1,0 +1,13 @@
+{
+  "name": "campusone",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CampusOne — Student Organization Management System for Skyline Student Association (Odoo x NMIT Hackathon)",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "preview": "pnpm --filter web preview",
+    "check": "pnpm --filter web check"
+  },
+  "packageManager": "pnpm@11.8.0"
+}

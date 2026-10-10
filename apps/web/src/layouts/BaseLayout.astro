@@ -1,0 +1,43 @@
+---
+import Navbar from '../components/layout/Navbar.astro';
+import Footer from '../components/layout/Footer.astro';
+import PromoBanner from '../components/ui/PromoBanner.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  showDemoBanner?: boolean;
+}
+
+const {
+  title = 'CampusOne — Skyline Student Association',
+  description = 'The unified operating system for student organizations: memberships, gala events, announcements, merch, fundraisers, and club finances.',
+  showDemoBanner = true,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="h-full bg-[var(--color-canvas)]">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body class="min-h-full flex flex-col antialiased selection:bg-[var(--color-primary)] selection:text-white">
+    {
+      showDemoBanner && (
+        <PromoBanner variant="dark">
+          Demo Mode: Skyline Student Association · All dues & tickets recorded in Razorpay Test Mode
+        </PromoBanner>
+      )
+    }
+    <Navbar />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

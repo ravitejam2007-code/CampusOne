@@ -1,0 +1,183 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import Badge from '../components/ui/Badge.astro';
+
+const scenes = [
+  {
+    scene: 'Scene 1',
+    title: 'New Student Joins',
+    desc: 'Self-service & walk-up signups, membership tiers, dues payment, and door-side lookup.',
+    href: '/memberships',
+    cta: 'Explore Tiers',
+    badge: 'Memberships',
+    badgeVariant: 'neutral' as const,
+  },
+  {
+    scene: 'Scene 2',
+    title: 'Spring Gala Tickets',
+    desc: 'Tiered tickets for members & guests, real-time seat limits, and 2-second QR door check-in.',
+    href: '/events',
+    cta: 'View Gala Tickets',
+    badge: 'Events & QR',
+    badgeVariant: 'neutral' as const,
+  },
+  {
+    scene: 'Scene 3',
+    title: 'Club Announcements',
+    desc: 'Web announcement feed, audience-targeted updates, and verifiable mailing list opt-out.',
+    href: '/announcements',
+    cta: 'Read Feed',
+    badge: 'Communications',
+    badgeVariant: 'neutral' as const,
+  },
+  {
+    scene: 'Scene 4',
+    title: 'Hoodies & Merch',
+    desc: 'Size and color variants, member discounts, and atomic stock reservation to prevent overselling.',
+    href: '/merch',
+    cta: 'Browse Shop',
+    badge: 'Merchandise',
+    badgeVariant: 'neutral' as const,
+  },
+  {
+    scene: 'Scene 5',
+    title: 'Bake Sale Fundraiser',
+    desc: 'Visual volunteer task board with assignees and real-time raised vs goal tracking.',
+    href: '/fundraiser',
+    cta: 'View Task Board',
+    badge: 'Fundraising',
+    badgeVariant: 'neutral' as const,
+  },
+  {
+    scene: 'Scene 6',
+    title: 'Treasurer Ledger',
+    desc: 'At-a-glance money in, money out, and net balance backed by an immutable, source-linked audit trail.',
+    href: '/treasurer',
+    cta: 'View Finances',
+    badge: 'Finance & Books',
+    badgeVariant: 'attention' as const,
+  },
+];
+---
+
+<BaseLayout
+  title="CampusOne — Skyline Student Association"
+  description="One unified operating system to run events, members, and money in one place."
+>
+  <!-- Hero Section (Marketing Hero with Dual-CTA Pair) -->
+  <section class="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-surface-soft)] border border-[var(--color-hairline-soft)]">
+      <span class="w-2 h-2 rounded-full bg-[var(--color-success)]"></span>
+      <span class="text-[13px] font-bold text-[var(--color-ink)]">Skyline Student Association · 2026</span>
+    </div>
+
+    <h1 class="text-4xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-[var(--color-ink-deep)] max-w-5xl mx-auto leading-[1.12]">
+      Build one system to run events, members, and money in one place.
+    </h1>
+
+    <p class="text-lg sm:text-xl text-[var(--color-steel)] font-light max-w-2xl mx-auto leading-relaxed">
+      Look forward. Say goodbye to spreadsheets, lost cash at the door, forgotten dues, and messy group chats.
+    </p>
+
+    <!-- Meta Dual-CTA Pattern (Black Primary + Ghost Secondary) -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+      <Button variant="primary" size="lg" href="/memberships">
+        Join the Association
+      </Button>
+      <Button variant="secondary" size="lg" href="/events">
+        Get Spring Gala Tickets
+      </Button>
+    </div>
+  </section>
+
+  <!-- 4-Up Reassurance Feature Row (card-icon-feature) -->
+  <section class="border-y border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <Card variant="icon-tile">
+        <h4 class="font-bold text-[16px] text-[var(--color-ink-deep)] mb-1">Instant Signups</h4>
+        <p class="text-[14px] text-[var(--color-steel)] leading-relaxed">
+          Walk-up or self-service signup with automatic dues validation and expiry tracking.
+        </p>
+      </Card>
+
+      <Card variant="icon-tile">
+        <h4 class="font-bold text-[16px] text-[var(--color-ink-deep)] mb-1">Atomic Check-in</h4>
+        <p class="text-[14px] text-[var(--color-steel)] leading-relaxed">
+          Cryptographic QR scanning at the door in seconds with zero paper attendee lists.
+        </p>
+      </Card>
+
+      <Card variant="icon-tile">
+        <h4 class="font-bold text-[16px] text-[var(--color-ink-deep)] mb-1">Stock Integrity</h4>
+        <p class="text-[14px] text-[var(--color-steel)] leading-relaxed">
+          Variant inventory decrementing prevents overselling gala seats or club hoodies.
+        </p>
+      </Card>
+
+      <Card variant="icon-tile">
+        <h4 class="font-bold text-[16px] text-[var(--color-ink-deep)] mb-1">Source-Linked Ledger</h4>
+        <p class="text-[14px] text-[var(--color-steel)] leading-relaxed">
+          Every rupee collected from dues, tickets, merch, and cash links to a traceable entry.
+        </p>
+      </Card>
+    </div>
+  </section>
+
+  <!-- Six Scenes Grid (PDF Problem Statement Solutions) -->
+  <section class="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+    <div class="text-center max-w-2xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-medium text-[var(--color-ink-deep)] mb-3">
+        A Semester with the Club
+      </h2>
+      <p class="text-[16px] text-[var(--color-steel)]">
+        Every scene in a normal student organization semester, built with honest business rules and real persisted data.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {
+        scenes.map((s) => (
+          <Card variant="feature" class="flex flex-col justify-between hover:border-[var(--color-ink-deep)] transition-colors">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-[12px] font-mono font-bold text-[var(--color-steel)]">{s.scene}</span>
+                <Badge variant={s.badgeVariant}>{s.badge}</Badge>
+              </div>
+              <h3 class="text-2xl font-bold text-[var(--color-ink-deep)]">
+                {s.title}
+              </h3>
+              <p class="text-[14px] text-[var(--color-steel)] leading-relaxed">
+                {s.desc}
+              </p>
+            </div>
+            <div class="pt-6 mt-6 border-t border-[var(--color-hairline-soft)]">
+              <Button variant="ghost" size="sm" href={s.href} class="w-full">
+                {s.cta} →
+              </Button>
+            </div>
+          </Card>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Promo Strip CTA (card-promo-strip) -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+    <Card variant="promo-strip" class="text-center space-y-6">
+      <Badge variant="promo-yellow">Odoo × NMIT Hackathon 2026</Badge>
+      <h2 class="text-3xl sm:text-5xl font-medium text-white max-w-3xl mx-auto leading-tight">
+        Experience the unified operating system in action.
+      </h2>
+      <p class="text-white/80 max-w-xl mx-auto text-[16px] font-light leading-relaxed">
+        Built on Astro 5, Tailwind CSS v4, and Supabase BaaS. Ready to onboard new members, issue tickets, and close the semester books.
+      </p>
+      <div class="pt-2">
+        <Button variant="buy-cta" size="lg" href="/memberships">
+          Join Skyline Club (₹300)
+        </Button>
+      </div>
+    </Card>
+  </section>
+</BaseLayout>
