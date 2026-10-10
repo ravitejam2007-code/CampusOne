@@ -140,6 +140,163 @@
       - Display badges for membership status (`pass.payload.membership.tier_name`) and discounts.
       - Map upcoming events from `pass.payload.upcoming_events` into event admission chips.
 
+## All-in-One Pass API Reference & Technical Specification
+
+### 1. Data Schema Contracts (`@campusone/contracts`)
+```typescript
+export interface StudentPassMembershipInfo {
+  is_member: boolean;
+  status: 'active' | 'pending' | 'expired' | 'none';
+  tier_id?: string;
+  tier_name?: string;
+  starts_at?: string;
+  expires_at?: string;
+  days_remaining?: number;
+  ticket_discount_percent?: number;
+  merch_discount_percent?: number;
+  benefits?: string[];
+}
+
+export interface StudentPassEventTicket {
+  ticket_id: string;
+  event_id: string;
+  event_title: string;
+  venue?: string;
+  starts_at: string;
+  ticket_type_name: string;
+  status: string;
+  qr_token: string;
+}
+
+export interface StudentAllInOnePassPayload {
+  pass_token: string;         // e.g. "SKYPASS:v1:user_id:hmac_signature_hex"
+  pass_version: string;       // "1.0"
+  issuer: string;             // "Skyline Student Association · CampusOne"
+  generated_at: string;
+  student: {
+    user_id: string;
+    full_name: string;
+    email: string;
+    student_id?: string;      // e.g. "SKY-2026-1042"
+    avatar_url?: string | null;
+  };
+  membership: StudentPassMembershipInfo;
+  upcoming_events: StudentPassEventTicket[];
+  signature: string;
+}
+
+export interface StudentAllInOnePassResult {
+  status: 'success' | 'error';
+  pass_token: string;
+  qr_data_url?: string;       // Base64 PNG data URL: data:image/png;base64,...
+  qr_svg?: string;            // Scalable Vector Graphics string
+  payload: StudentAllInOnePassPayload;
+}
+
+export interface VerifyStudentPassResult {
+  status: 'success' | 'error';
+  verified: boolean;
+  data: {
+    valid: boolean;
+    pass_token: string;
+    verified_at: string;
+    student: {
+      user_id: string;
+      full_name: string;
+      email: string;
+      student_id?: string;
+      avatar_url?: string | null;
+    };
+    membership: StudentPassMembershipInfo;
+    upcoming_events: StudentPassEventTicket[];
+  };
+}
+```
+
+### 2. Error Response Standard
+All Edge Function failure responses return JSON following this standard:
+```json
+{
+  "error": {
+    "code": "UNAUTHENTICATED | FORBIDDEN | NOT_FOUND | INVALID_REQUEST | INTERNAL_ERROR",
+    "message": "Human-readable failure details"
+  }
+}
+```
+- `400 INVALID_REQUEST`: Missing `pass_token` in verification call.
+- `401 UNAUTHENTICATED`: Missing or invalid Bearer JWT.
+- `403 FORBIDDEN`: Non-staff user attempting to generate a pass for a different `user_id`.
+- `404 NOT_FOUND`: Student profile does not exist in `public.profiles`.
+- `500 INTERNAL_ERROR`: Unexpected database exception.
+
+### 3. Frontend Integration Recipe (React Island)
+```tsx
+import React, { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import type { StudentAllInOnePassResult } from '@campusone/contracts';
+
+export function StudentPassCard() {
+  const [pass, setPass] = useState<StudentAllInOnePassResult | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.generateAllInOnePass().then((res) => {
+      setPass(res);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <div className="p-8 text-center text-ink-muted">Generating secure pass...</div>;
+  if (!pass) return null;
+
+  const { student, membership, upcoming_events } = pass.payload;
+
+  return (
+    <div className="bg-canvas border border-hairline-soft rounded-3xl p-6 max-w-sm mx-auto shadow-sm">
+      <div className="flex items-center justify-between pb-4 border-b border-hairline-soft">
+        <div>
+          <h3 className="font-bold text-ink text-lg">{student.full_name}</h3>
+          <p className="text-xs text-ink-muted font-mono">{student.student_id}</p>
+        </div>
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+          {membership.tier_name}
+        </span>
+      </div>
+
+      <div className="my-6 flex flex-col items-center">
+        <img
+          src={pass.qr_data_url}
+          alt="Student QR Pass"
+          className="w-56 h-56 rounded-2xl border border-hairline-soft p-2 bg-white"
+        />
+        <p className="text-[10px] text-ink-muted mt-2 font-mono truncate max-w-[240px]">
+          {pass.pass_token}
+        </p>
+      </div>
+
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-wider text-ink-muted mb-2">
+          Registered Events ({upcoming_events.length})
+        </h4>
+        <div className="space-y-2">
+          {upcoming_events.map((ev) => (
+            <div key={ev.ticket_id} className="p-2 rounded-xl bg-canvas-soft text-xs flex justify-between">
+              <div>
+                <p className="font-semibold text-ink">{ev.event_title}</p>
+                <p className="text-[11px] text-ink-muted">{ev.venue}</p>
+              </div>
+              <span className="self-center px-2 py-0.5 rounded-full text-[10px] bg-sky-100 text-sky-800">
+                {ev.ticket_type_name}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
 ## Key Design Rules & Conventions
 
 - **Cobalt Rule:** `#0064E0` is strictly reserved for buy-now / checkout flows (`Add to cart`, `Buy Tickets`, `Pay Dues`). Marketing and general CTAs use black pill buttons (`#000000`).
